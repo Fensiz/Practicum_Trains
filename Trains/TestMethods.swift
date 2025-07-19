@@ -19,6 +19,12 @@ enum TestMethods {
 			)
 		}
 	}
+	static var clientOpt: Client? {
+		get {
+			guard let url = try? Servers.Server1.url() else { return nil }
+			return Client(serverURL: url, transport: URLSessionTransport())
+		}
+	}
 
 	static func testFetchNearestStations() {
 		Task {

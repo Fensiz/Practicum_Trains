@@ -13,6 +13,11 @@ protocol SearchServiceProtocol {
 	func getScheduleBetweenStations(from: String, to: String) async throws -> Segments
 }
 
+///Расписание рейсов между станциями
+///
+///Сервис позволяет получить список рейсов, следующих от указанной станции отправления
+///к указанной станции прибытияи информацию по каждому рейсу.
+///
 final class SearchService: SearchServiceProtocol {
 	private let client: Client
 	private let apikey: String
