@@ -24,8 +24,8 @@ struct SimpleTrip: Hashable {
 	var logoUrl: String?
 	var carrierName: String
 	var additionalInfo: String?
-	var departureTime: String
-	var arrivalTime: String
+	var departureTime: String?
+	var arrivalTime: String?
 	var duration: String?
 	var date: String?
 }
@@ -41,6 +41,10 @@ struct SimpleTrip: Hashable {
 	@Published var selectedToStation: SimpleStation? = nil
 
 	@Published var trips: [SimpleTrip] = []
+
+	@Published var selectedTimeIntervals: [Bool] = [false, false, false, false]
+	@Published var transferFilter: Bool? = nil
+	@Published var filteredTrips: [SimpleTrip] = []
 
 	private var cancellables = Set<AnyCancellable>()
 	private var loader: any SettlementLoaderProtocol
@@ -102,12 +106,11 @@ struct SimpleTrip: Hashable {
 		guard let segments = response.segments else { return }
 		print(segments)
 
-		let dateFormatter = DateFormatter()
-		dateFormatter.dateFormat = "yyyy-MM-dd"
+		let dateFormatter = ISO8601DateFormatter()
 
 		trips = segments.sorted {
-			let date1 = $0.start_date.flatMap { dateFormatter.date(from: $0) } ?? .distantFuture
-			let date2 = $1.start_date.flatMap { dateFormatter.date(from: $0) } ?? .distantFuture
+			let date1 = $0.departure.flatMap { dateFormatter.date(from: $0) } ?? .distantFuture
+			let date2 = $1.departure.flatMap { dateFormatter.date(from: $0) } ?? .distantFuture
 			return date1 < date2
 		}
 		.compactMap { (segment) -> SimpleTrip? in
@@ -116,28 +119,48 @@ struct SimpleTrip: Hashable {
 				let carrierTitle = carrier.title,
 				let departure = segment.departure,
 				let arrival = segment.arrival else { return nil }
+			var transfer: String? = nil
+			if
+				let hasTransfers = segment.has_transfers,
+				let transfers = segment.transfers,
+				hasTransfers && !transfers.isEmpty {
+				if let title = transfers.first?.title {
+					transfer = title
+				}
+			}
+
 			return SimpleTrip(
 				logoUrl: carrier.logo,
 				carrierName: carrierTitle,
-				additionalInfo: nil,
-				departureTime: String(departure.prefix(5)),
-				arrivalTime: String(arrival.prefix(5)),
+				additionalInfo: transfer,
+				departureTime: formatTime(from: departure),
+				arrivalTime: formatTime(from: arrival),
 				duration: secondsToRoundedHoursString(segment.duration),
 				date: formatDateString(segment.start_date)
 			)
 		}
-
-
+		applyFilters()
 	}
+
+	private nonisolated func formatTime(from isoString: String) -> String? {
+		let formatter = ISO8601DateFormatter()
+	 formatter.formatOptions = [.withInternetDateTime]
+
+	 guard let date = formatter.date(from: isoString) else { return nil }
+
+	 let outputFormatter = DateFormatter()
+	 outputFormatter.dateFormat = "HH:mm"
+
+	 return outputFormatter.string(from: date)
+ }
 
 	private nonisolated func formatDateString(_ date: String?) -> String {
 		guard let date else { return "-" }
 		let inputFormatter = DateFormatter()
 		inputFormatter.dateFormat = "yyyy-MM-dd"
-		inputFormatter.locale = Locale(identifier: "ru_RU") // Русский язык
+		inputFormatter.locale = Locale(identifier: "ru_RU")
 
 		if let date = inputFormatter.date(from: date) {
-			// Шаг 2: Преобразуем Date в формат "14 октября"
 			let outputFormatter = DateFormatter()
 			outputFormatter.dateFormat = "d MMMM"
 			outputFormatter.locale = Locale(identifier: "ru_RU")
@@ -170,5 +193,43 @@ struct SimpleTrip: Hashable {
 
 	private func filterCities(with text: String) {
 		cities = allCities.filter { text.isEmpty || $0.title.localizedCaseInsensitiveContains(text) }
+	}
+
+
+	func applyFilters() {
+		let timeIntervals: [(start: Int, end: Int)] = [
+			(6, 12),   // Утро
+			(12, 18),  // День
+			(18, 24),  // Вечер
+			(0, 6)     // Ночь
+		]
+
+		let selectedIntervals = selectedTimeIntervals.enumerated()
+			.filter { $0.element }
+			.map { timeIntervals[$0.offset] }
+
+		filteredTrips = trips.filter { trip in
+			// Пересадки
+			if let filter = transferFilter {
+				if filter && trip.additionalInfo == nil { return false }
+				if !filter && trip.additionalInfo != nil { return false }
+			}
+
+			// Время
+			guard let timeString = trip.departureTime,
+				  let hour = Int(timeString.prefix(2)) else { return false }
+
+			if selectedIntervals.isEmpty {
+				return true
+			}
+
+			return selectedIntervals.contains(where: { range in
+				if range.start < range.end {
+					return hour >= range.start && hour < range.end
+				} else {
+					return hour >= range.start || hour < range.end
+				}
+			})
+		}
 	}
 }

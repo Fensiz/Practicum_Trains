@@ -19,6 +19,7 @@ struct BackToolbarModifier: ViewModifier {
 							path.removeLast()
 						}) {
 							Image(systemName: "chevron.left")
+								.fontWeight(.semibold)
 						}
 					}
 				}
@@ -28,6 +29,8 @@ struct BackToolbarModifier: ViewModifier {
 
 extension View {
 	func withBackToolbar(path: Binding<[Route]>) -> some View {
-		self.modifier(BackToolbarModifier(path: path))
+		self
+			.navigationBarBackButtonHidden(true)
+			.modifier(BackToolbarModifier(path: path))
 	}
 }

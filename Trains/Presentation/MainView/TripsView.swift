@@ -17,29 +17,45 @@ struct TripsView: View {
 				Text("\(viewModel.selectedFromStation?.title ?? "") → \(viewModel.selectedToStation?.title ?? "")")
 					.font(.ypMediumBold)
 					.padding(16)
-				List {
-					ForEach(viewModel.trips, id: \.self) { item in
-						ScheduleItem(item: item)
-							.listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+				if viewModel.filteredTrips.isEmpty {
+					Text("Вариантов нет")
+						.font(.ypMediumBold)
+						.frame(maxHeight: .infinity)
+				} else {
+					List {
+						ForEach(viewModel.filteredTrips, id: \.self) { item in
+							ScheduleItem(item: item)
+								.listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+						}
+						if viewModel.filteredTrips.count > 4 {
+							Color.clear
+								.frame(height: 100)
+								.listRowInsets(EdgeInsets())
+						}
 					}
-					if viewModel.trips.count > 4 {
-						Color.clear
-							.frame(height: 100)
-							.listRowInsets(EdgeInsets())
-					}
+					.listStyle(.plain)
 				}
-				.listStyle(.plain)
 			}
 			VStack {
 				Spacer()
-				Button("Уточнить время") {
+				Button {
 					path.append(.filters)
+				} label: {
+					HStack(spacing: 4) {
+						Text("Уточнить время")
+						if viewModel.transferFilter != nil {
+							Circle()
+								.fill(.ypRed)
+								.frame(width: 8, height: 8)
+						}
+					}
 				}
 				.buttonStyle(PrimaryButtonStyle())
 				.padding(.bottom, 24)
 				.padding(.horizontal, 16)
 			}
 		}
+		.withBackToolbar(path: $path)
 	}
 }
 
@@ -90,7 +106,7 @@ struct ScheduleItem: View {
 			.padding(.top, 14)
 			.padding(.bottom, 4)
 			HStack {
-				Text(item.departureTime)
+				Text(item.departureTime ?? "-")
 				Rectangle()
 					.fill(.ypGray)
 					.frame(height: 1)
@@ -99,7 +115,7 @@ struct ScheduleItem: View {
 				Rectangle()
 					.fill(.ypGray)
 					.frame(height: 1)
-				Text(item.arrivalTime)
+				Text(item.arrivalTime ?? "-")
 			}
 			.font(.ypMedium)
 			.foregroundStyle(.black)
@@ -113,7 +129,3 @@ struct ScheduleItem: View {
 		)
 	}
 }
-
-//#Preview {
-//	TripsView()
-//}

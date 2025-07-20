@@ -110,7 +110,7 @@ struct MainView: View {
 					case .trips:
 						TripsView(viewModel: viewModel, path: $path)
 					case .filters:
-						OptionsView()
+						OptionsView(viewModel: viewModel, path: $path)
 				}
 			}
 		}

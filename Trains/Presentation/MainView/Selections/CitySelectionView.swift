@@ -15,6 +15,7 @@ struct CitySelectionView: View {
 	public var body: some View {
 		VStack(spacing: 0) {
 			SearchBar(searchText: $viewModel.citySearchText, placeholder: "Введите запрос")
+				.padding(.bottom, Constants.padding)
 			if viewModel.cities.isEmpty && !viewModel.citySearchText.isEmpty {
 				Text("Город не найден")
 					.font(.ypMediumBold)

@@ -6,6 +6,7 @@
 //
 
 import OpenAPIRuntime
+import Foundation
 
 typealias Segments = Components.Schemas.Segments
 
@@ -28,7 +29,16 @@ final actor SearchService: SearchServiceProtocol {
 	}
 
 	func getScheduleBetweenStations(from: String, to: String) async throws -> Segments {
-		let response = try await client.getScheduleBetweenStations(query: .init(apikey: apikey, from: from, to: to, transport_types: "train", transfers: true))
+		print(from, to)
+		let response = try await client.getScheduleBetweenStations(
+			query: .init(
+				apikey: apikey,
+				from: from,
+				to: to,
+				date: Date().toISODateString(),
+				transfers: true
+			)
+		)
 		return try response.ok.body.json
 	}
 }

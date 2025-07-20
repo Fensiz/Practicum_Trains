@@ -8,23 +8,30 @@
 import SwiftUI
 
 struct OptionsView: View {
-	@State private var selections: [Bool] = Array(repeating: false, count: 4)
-	@State private var isTransferEnabled: Bool? = nil
+	@ObservedObject private var viewModel: MainViewModel
+	@Binding private var path: [Route]
+
+	init(viewModel: MainViewModel, path: Binding<[Route]>) {
+		self.viewModel = viewModel
+		self._path = path
+	}
+
 	var body: some View {
 		VStack(spacing: 0) {
-			TimeOptionView(selections: $selections)
-			TransferView(isTransferEnabled: $isTransferEnabled)
+			TimeOptionView(selections: $viewModel.selectedTimeIntervals)
+			TransferView(isTransferEnabled: $viewModel.transferFilter)
 			Spacer()
-			if let _ = isTransferEnabled, selections.reduce(false, { $0 || $1 }) {
+			if let _ = viewModel.transferFilter, viewModel.selectedTimeIntervals.reduce(false, { $0 || $1 }) {
 				Button("Применить") {
-
+					viewModel.applyFilters()
+					path.removeLast()
 				}
 				.buttonStyle(PrimaryButtonStyle())
 				.padding(.bottom, 24)
 				.padding(.horizontal, 16)
 			}
-				
 		}
+		.withBackToolbar(path: $path)
 	}
 }
 
@@ -60,7 +67,7 @@ struct TransferView: View {
 	@Binding var isTransferEnabled: Bool?
 	var body: some View {
 		VStack(alignment: .leading, spacing: 0) {
-			Text("Время отправления")
+			Text("Показывать варианты с пересадками")
 				.font(.ypMediumBold)
 				.padding(.vertical, Constants.padding)
 
@@ -84,9 +91,9 @@ struct TransferView: View {
 	}
 }
 
-#Preview {
-	OptionsView()
-}
+//#Preview {
+//	OptionsView()
+//}
 
 #Preview {
 	TransferView(isTransferEnabled: .constant(false))

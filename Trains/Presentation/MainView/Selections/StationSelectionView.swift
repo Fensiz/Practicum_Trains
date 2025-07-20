@@ -15,6 +15,7 @@ struct StationSelectionView: View {
 	public var body: some View {
 		VStack(spacing: 0) {
 			SearchBar(searchText: $vm.stationSearchText, placeholder: "Введите запрос")
+				.padding(.bottom, Constants.padding)
 			if vm.stations.isEmpty {
 				Text("Станция не найдена")
 					.font(.ypMediumBold)
@@ -35,7 +36,6 @@ struct StationSelectionView: View {
 			}
 		}
 		.navigationTitle("Выбор станции")
-		.navigationBarBackButtonHidden(true)
 		.withBackToolbar(path: $path)
 	}
 }
