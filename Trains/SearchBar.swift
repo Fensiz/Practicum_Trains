@@ -20,7 +20,7 @@ struct SearchBar: View {
 			HStack (spacing: 0) {
 				HStack {
 					TextField(placeholder, text: $searchText)
-						.font(.system(size: 17))
+						.font(.ypMedium)
 						.padding(.leading, 8)
 						.autocorrectionDisabled(true)
 						.autocapitalization(.none)

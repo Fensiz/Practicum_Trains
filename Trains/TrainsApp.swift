@@ -33,7 +33,7 @@ struct TrainsApp: App {
 
 @MainActor final class AppState: ObservableObject {
 	@Published var dependencies: AppDependencies?
-	@Published var error: Error?
+	@Published var error: (any Error)?
 
 	func loadDependencies() async {
 		do {
@@ -53,7 +53,7 @@ struct TrainsApp: App {
 	}
 }
 struct ErrorView: View {
-	let error: Error
+	let error: any Error
 	let onRetry: () -> Void
 
 	var body: some View {

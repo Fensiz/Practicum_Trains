@@ -9,8 +9,15 @@ import SwiftUI
 
 struct MainView: View {
 	@State private var path: [Route] = []
-
 	@StateObject private var viewModel: MainViewModel
+	private let stories: [Image] = [
+		Image("stories_1"),
+		Image("stories_2"),
+		Image("stories_3"),
+		Image("stories_4"),
+		Image("stories_5"),
+		Image("stories_6"),
+	]
 
 	init(viewModel: MainViewModel) {
 		_viewModel = .init(wrappedValue: viewModel)
@@ -22,16 +29,19 @@ struct MainView: View {
 				// Горизонтальная лента
 				ScrollView(.horizontal) {
 					LazyHGrid(rows: [.init(.fixed(92), spacing: 12)]) {
-						ForEach(0..<10) { _ in
-							Color.red
+						ForEach(0..<10) { i in
+							stories[i % stories.count]
+								.resizable()
+								.aspectRatio(contentMode: .fill)
 								.frame(width: 92, height: 140)
-								.clipShape(RoundedRectangle(cornerRadius: 16))
+								.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
 						}
 					}
-					.padding(.horizontal, 16)
+					.padding(.horizontal, Constants.padding)
 				}
 				.frame(height: 140)
 				.padding(.vertical, 24)
+				.scrollIndicators(.hidden)
 
 				// Панель выбора городов
 				HStack(spacing: 16) {
@@ -43,13 +53,17 @@ struct MainView: View {
 							path.append(.selectCity(.to))
 						}
 					}
-					.padding(.horizontal, 16)
-					.background(RoundedRectangle(cornerRadius: 20).fill(.white))
+					.padding(.horizontal, Constants.padding)
+					.background(
+						RoundedRectangle(
+							cornerRadius: Constants.cornerRadiusMedium
+						).fill(.white)
+					)
 
 					Button {
 						swap(&viewModel.selectedToStation, &viewModel.selectedFromStation)
 					} label: {
-						Image("Swap")
+						Image("swap")
 							.frame(width: 36, height: 36)
 							.background(
 								Circle()
@@ -58,23 +72,30 @@ struct MainView: View {
 							)
 					}
 				}
-				.padding(16)
-				.background(RoundedRectangle(cornerRadius: 20).fill(.ypBlue))
-				.padding(.horizontal, 16)
+				.padding(Constants.padding)
+				.background(
+					RoundedRectangle(
+						cornerRadius: Constants.cornerRadiusMedium
+					).fill(.ypBlue)
+				)
+				.padding(.horizontal, Constants.padding)
 				.padding(.top, 20)
-				.padding(.bottom, 16)
+				.padding(.bottom, Constants.padding)
 
 				// Кнопка Найти
 				if viewModel.selectedToStation != nil && viewModel.selectedFromStation != nil {
 					Button {
-						// Выполнить поиск
+						Task {
+							try? await viewModel.fetchTrips()
+						}
+						path.append(.trips)
 					} label: {
 						Text("Найти")
-							.font(.system(size: 17, weight: .bold))
+							.font(.ypSmallBold)
 							.foregroundStyle(.white)
-							.frame(width: 150, height: 60)
+							.frame(width: 150, height: Constants.buttonHeight)
 							.background(Color.ypBlue)
-							.clipShape(RoundedRectangle(cornerRadius: 16))
+							.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
 					}
 				}
 
@@ -86,38 +107,28 @@ struct MainView: View {
 						CitySelectionView(viewModel: viewModel, path: $path, direction: direction)
 					case .selectStation(let direction):
 						StationSelectionView(vm: viewModel, path: $path, direction: direction)
+					case .trips:
+						TripsView(viewModel: viewModel, path: $path)
+					case .filters:
+						OptionsView()
 				}
 			}
 		}
 	}
 }
 
-struct CityButton: View {
-	let title: String
-	let value: String
-	let action: () -> Void
-
-	var body: some View {
-		Button(action: action) {
-			HStack {
-				Text(value.isEmpty ? title : value)
-					.foregroundColor(value.isEmpty ? .ypGray : .black)
-					.lineLimit(1)
-				Spacer()
-			}
-		}
-		.frame(height: 48)
-	}
-}
-
 enum Route: Hashable {
 	case selectCity(Direction)
 	case selectStation(Direction)
+	case trips
+	case filters
 
 	static func == (lhs: Route, rhs: Route) -> Bool {
 		switch (lhs, rhs) {
 			case (.selectCity, .selectCity): true
 			case (.selectStation, .selectStation): true
+			case (.trips, .trips): true
+			case (.filters, .filters): true
 			default: false
 		}
 	}
@@ -125,10 +136,14 @@ enum Route: Hashable {
 	func hash(into hasher: inout Hasher) {
 		// Уникальные константы, чтобы отличать маршруты
 		switch self {
-		case .selectCity:
-			hasher.combine("selectCity")
-		case .selectStation:
-			hasher.combine("selectStation")
+			case .selectCity:
+				hasher.combine("selectCity")
+			case .selectStation:
+				hasher.combine("selectStation")
+			case .trips:
+				hasher.combine("trips")
+			case .filters:
+				hasher.combine("filters")
 		}
 	}
 }
@@ -140,8 +155,3 @@ enum Route: Hashable {
 #Preview {
 	SettingsView()
 }
-//#Preview {
-//	FromToView()
-//}
-
-

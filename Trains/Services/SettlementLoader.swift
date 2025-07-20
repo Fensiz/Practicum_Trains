@@ -14,7 +14,7 @@ import Combine
 
 @MainActor final class SettlementLoader: SettlementLoaderProtocol {
 	private let stationService: StationListService
-	private let cacheService: StationCacheServiceProtocol
+	private let cacheService: any StationCacheServiceProtocol
 
 	private let subject = CurrentValueSubject<[SettlementShort], Never>([])
 	var settlementsPublisher: AnyPublisher<[SettlementShort], Never> {
@@ -23,7 +23,7 @@ import Combine
 
 	init(
 		stationService: StationListService,
-		cacheService: StationCacheServiceProtocol,
+		cacheService: any StationCacheServiceProtocol,
 	) {
 		self.stationService = stationService
 		self.cacheService = cacheService
@@ -51,29 +51,33 @@ import Combine
 	}
 
 	nonisolated func process(_ response: AllStationsResponse) -> [SettlementShort] {
-		let settlements = response.countries?
-			.first(where: { $0.title == "Россия" })?
-			.regions?
-			.compactMap(\.settlements)
-			.flatMap { $0 }
-			.compactMap { item -> SettlementShort? in
+		var result: [String: SettlementShort] = [:]
+
+		guard let countries = response.countries,
+			  let russia = countries.first(where: { $0.title == "Россия" }),
+			  let regions = russia.regions else {
+			return []
+		}
+
+		for region in regions {
+			guard let settlements = region.settlements else { continue }
+
+			for settlement in settlements {
 				guard
-					let code = item.codes?.yandex_code,
-					let title = item.title,
-					let stations = item.stations,
+					let code = settlement.codes?.yandex_code,
+					let title = settlement.title,
+					let stations = settlement.stations,
 					!code.isEmpty,
 					!title.isEmpty,
 					!stations.isEmpty
-				else {
-					return nil
-				}
-				return (code, title, stations)
-			} ?? []
+				else { continue }
 
-		let unique = Dictionary(uniqueKeysWithValues: settlements.map { ($0.code, $0) })
-			.values
-			.sorted { $0.title < $1.title }
+				guard stations.contains(where: { $0.transport_type == "train" }) else { continue }
 
-		return Array(unique)
+				result[code] = (code, title, stations)
+			}
+		}
+
+		return result.values.sorted { $0.title < $1.title }
 	}
 }

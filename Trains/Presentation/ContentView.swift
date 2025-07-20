@@ -36,7 +36,7 @@ struct ContentView: View {
 					Image("Settings")
 				}
 		}
-		.tint(Color.primary)
+		.tint(.ypBlack)
 		.preferredColorScheme(isDarkThemeEnabled ? .dark : .light)
 	}
 }

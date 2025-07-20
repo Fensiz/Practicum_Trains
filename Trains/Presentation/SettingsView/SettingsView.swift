@@ -20,6 +20,7 @@ struct SettingsView: View {
 					.listRowSeparator(.hidden)
 					.listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
 					.frame(height: 60)
+					.tint(.ypBlue)
 					SelectableRow(title: "Пользовательское соглашение") {
 						path.append("detail")
 					}
@@ -30,7 +31,7 @@ struct SettingsView: View {
 					Text("Приложение использует API \"Яндекс.Расписания\"")
 					Text("Версия 1.0(beta)")
 				}
-				.font(.system(size: 12, weight: .regular))
+				.font(.ypSmall)
 				.padding(.horizontal, 16)
 				.padding(.bottom, 24)
 			}
