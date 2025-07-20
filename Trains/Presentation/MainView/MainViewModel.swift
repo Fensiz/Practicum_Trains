@@ -12,15 +12,14 @@ import Combine
 typealias Station = Components.Schemas.Station
 typealias SettlementShort = (code: String, title: String, stations: [Station])
 
-
-
 struct SimpleStation: Identifiable {
 	let title: String
 	let code: String
 	var id: String { code }
 }
 
-struct SimpleTrip: Hashable {
+struct SimpleTrip: Identifiable {
+	let id: UUID = .init()
 	var logoUrl: String?
 	var carrierName: String
 	var additionalInfo: String?
@@ -49,12 +48,18 @@ struct SimpleTrip: Hashable {
 	private var cancellables = Set<AnyCancellable>()
 	private var loader: any SettlementLoaderProtocol
 	private var searchService: any SearchServiceProtocol
+	private var carrierService: any CarrierServiceProtocol
 	private var allStations: [SimpleStation] = []
 	private var allCities: [SettlementShort] = []
 
-	init(loader: any SettlementLoaderProtocol, searchService: any SearchServiceProtocol) {
+	init(
+		loader: any SettlementLoaderProtocol,
+		searchService: any SearchServiceProtocol,
+		carrierService: any CarrierServiceProtocol
+	) {
 		self.loader = loader
 		self.searchService = searchService
+		self.carrierService = carrierService
 		loader.settlementsPublisher
 			.receive(on: RunLoop.main)
 			.sink { [weak self] in
@@ -98,6 +103,7 @@ struct SimpleTrip: Hashable {
 	}
 
 	func fetchTrips() async throws {
+		trips = []
 		guard
 			let from = selectedFromStation?.code,
 			let to = selectedToStation?.code
@@ -106,38 +112,77 @@ struct SimpleTrip: Hashable {
 		guard let segments = response.segments else { return }
 		print(segments)
 
-		let dateFormatter = ISO8601DateFormatter()
+		trips = try await withThrowingTaskGroup(of: SimpleTrip?.self) { group in
+			var result: [SimpleTrip] = []
 
-		trips = segments.sorted {
-			let date1 = $0.departure.flatMap { dateFormatter.date(from: $0) } ?? .distantFuture
-			let date2 = $1.departure.flatMap { dateFormatter.date(from: $0) } ?? .distantFuture
-			return date1 < date2
-		}
-		.compactMap { (segment) -> SimpleTrip? in
-			guard
-				let carrier = segment.thread?.carrier,
-				let carrierTitle = carrier.title,
-				let departure = segment.departure,
-				let arrival = segment.arrival else { return nil }
-			var transfer: String? = nil
-			if
-				let hasTransfers = segment.has_transfers,
-				let transfers = segment.transfers,
-				hasTransfers && !transfers.isEmpty {
-				if let title = transfers.first?.title {
-					transfer = title
+			for segment in segments {
+				group.addTask {
+					guard let hasTransfers = segment.has_transfers else { return nil }
+
+					if hasTransfers {
+						guard
+							let detail = segment.details?.first,
+							let thread = detail.thread,
+							let carrier = thread.carrier,
+							let carrierCode = carrier.code,
+							let carrierTitle = carrier.title,
+							let departure = detail.departure,
+							let arrival = detail.arrival
+						else { return nil }
+
+						var transfer: String? = nil
+						if let title = segment.transfers?.first?.title {
+							transfer = title
+						}
+
+						let carrierInfo = try? await self.carrierService.getCarrierInfo(code: "\(carrierCode)")
+
+						return SimpleTrip(
+							logoUrl: carrierInfo?.carrier?.logo,
+							carrierName: carrierTitle,
+							additionalInfo: transfer,
+							departureTime: self.formatTime(from: departure),
+							arrivalTime: self.formatTime(from: arrival),
+							duration: self.secondsToRoundedHoursString(detail.duration),
+							date: self.formatDateString(detail.start_date)
+						)
+					} else {
+						guard
+							let carrier = segment.thread?.carrier,
+							let carrierTitle = carrier.title,
+							let departure = segment.departure,
+							let arrival = segment.arrival
+						else { return nil }
+
+						var transfer: String? = nil
+						if let title = segment.transfers?.first?.title {
+							transfer = title
+						}
+
+						return SimpleTrip(
+							logoUrl: carrier.logo,
+							carrierName: carrierTitle,
+							additionalInfo: transfer,
+							departureTime: self.formatTime(from: departure),
+							arrivalTime: self.formatTime(from: arrival),
+							duration: self.secondsToRoundedHoursString(segment.duration),
+							date: self.formatDateString(segment.start_date)
+						)
+					}
 				}
 			}
 
-			return SimpleTrip(
-				logoUrl: carrier.logo,
-				carrierName: carrierTitle,
-				additionalInfo: transfer,
-				departureTime: formatTime(from: departure),
-				arrivalTime: formatTime(from: arrival),
-				duration: secondsToRoundedHoursString(segment.duration),
-				date: formatDateString(segment.start_date)
-			)
+			for try await trip in group {
+				guard let trip else { continue }
+				let index = result.firstIndex { existing in
+					(trip.departureTime ?? "") < (existing.departureTime ?? "")
+				} ?? result.endIndex
+
+				result.insert(trip, at: index)
+				filteredTrips = trips
+			}
+
+			return result
 		}
 		applyFilters()
 	}
@@ -209,13 +254,12 @@ struct SimpleTrip: Hashable {
 			.map { timeIntervals[$0.offset] }
 
 		filteredTrips = trips.filter { trip in
-			// Пересадки
 			if let filter = transferFilter {
-				if filter && trip.additionalInfo == nil { return false }
-				if !filter && trip.additionalInfo != nil { return false }
+				if filter == false, trip.additionalInfo != nil {
+					return false
+				}
 			}
 
-			// Время
 			guard let timeString = trip.departureTime,
 				  let hour = Int(timeString.prefix(2)) else { return false }
 

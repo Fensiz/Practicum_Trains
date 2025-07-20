@@ -23,7 +23,7 @@ struct TripsView: View {
 						.frame(maxHeight: .infinity)
 				} else {
 					List {
-						ForEach(viewModel.filteredTrips, id: \.self) { item in
+						ForEach(viewModel.filteredTrips) { item in
 							ScheduleItem(item: item)
 								.listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
 						}

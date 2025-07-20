@@ -542,13 +542,17 @@ components:
           type: string
         except_days:
           type: string
-        has_transfers:
-          type: boolean
-          description: Признак наличия пересадок по маршруту.
         transfers:
           type: array
           items:
             $ref: '#/components/schemas/Transfer'
+        details:
+          type: array
+          items:
+            $ref: '#/components/schemas/Segment'
+        has_transfers:
+          type: boolean
+          description: Признак наличия пересадок по маршруту.
     Transfer:
       type: object
       properties:
