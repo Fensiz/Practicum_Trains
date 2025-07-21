@@ -8,61 +8,71 @@
 import UIKit
 
 enum Utils {
+	
+	// MARK: - TabBar
+
 	@MainActor static func setupTabBarAppearance() {
 		let appearance = UITabBarAppearance()
-		appearance.configureWithOpaqueBackground()			// Убирает размытие и прозрачность
-		appearance.backgroundColor = .systemBackground		// Устанавливает белый фон
-		appearance.shadowColor = .separator					// Или .lightGray, если нужен разделитель
+		appearance.configureWithOpaqueBackground()
+		appearance.backgroundColor = .systemBackground
+		appearance.shadowColor = .separator
 
-		// Применяет к обычному и прокручиваемому состоянию (iOS 15+)
 		UITabBar.appearance().standardAppearance = appearance
 		if #available(iOS 15.0, *) {
 			UITabBar.appearance().scrollEdgeAppearance = appearance
 		}
 	}
 
+	// MARK: - Formatters
+
+	private static let inputDateFormatter: DateFormatter = {
+		let formatter = DateFormatter()
+		formatter.dateFormat = "yyyy-MM-dd"
+		formatter.locale = Locale(identifier: "ru_RU")
+		return formatter
+	}()
+
+	private static let outputDateFormatter: DateFormatter = {
+		let formatter = DateFormatter()
+		formatter.dateFormat = "d MMMM"
+		formatter.locale = Locale(identifier: "ru_RU")
+		return formatter
+	}()
+
+	private static let timeOutputFormatter: DateFormatter = {
+		let formatter = DateFormatter()
+		formatter.dateFormat = "HH:mm"
+		return formatter
+	}()
+
+	nonisolated(unsafe) private static let isoFormatter: ISO8601DateFormatter = {
+		let formatter = ISO8601DateFormatter()
+		formatter.formatOptions = [.withInternetDateTime]
+		return formatter
+	}()
+
+	// MARK: - Public Methods
+
 	static func formatDateString(_ date: String?) -> String? {
-		guard let date else { return nil }
-		let inputFormatter = DateFormatter()
-		inputFormatter.dateFormat = "yyyy-MM-dd"
-		inputFormatter.locale = Locale(identifier: "ru_RU")
-
-		if let date = inputFormatter.date(from: date) {
-			let outputFormatter = DateFormatter()
-			outputFormatter.dateFormat = "d MMMM"
-			outputFormatter.locale = Locale(identifier: "ru_RU")
-
-			let formatted = outputFormatter.string(from: date)
-			return formatted
-		}
-		return nil
+		guard let date, let parsed = inputDateFormatter.date(from: date) else { return nil }
+		return outputDateFormatter.string(from: parsed)
 	}
 
 	static func secondsToRoundedHoursString(_ seconds: Int?) -> String? {
 		guard let seconds else { return nil }
 		let hours = seconds / 3600
 		let remainingSeconds = seconds % 3600
-		let roundedHours = hours + (remainingSeconds > 0 ? 1 : 0)
+		let rounded = hours + (remainingSeconds > 0 ? 1 : 0)
 
-		switch roundedHours {
-		case 1:
-			return "1 час"
-		case 2...4:
-			return "\(roundedHours) часа"
-		default:
-			return "\(roundedHours) часов"
+		switch rounded {
+			case 1: return "1 час"
+			case 2...4: return "\(rounded) часа"
+			default: return "\(rounded) часов"
 		}
 	}
 
 	static func formatTime(from isoString: String) -> String? {
-		let formatter = ISO8601DateFormatter()
-		formatter.formatOptions = [.withInternetDateTime]
-
-		guard let date = formatter.date(from: isoString) else { return nil }
-
-		let outputFormatter = DateFormatter()
-		outputFormatter.dateFormat = "HH:mm"
-
-		return outputFormatter.string(from: date)
+		guard let date = isoFormatter.date(from: isoString) else { return nil }
+		return timeOutputFormatter.string(from: date)
 	}
 }
