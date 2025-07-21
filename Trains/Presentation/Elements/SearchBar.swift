@@ -8,11 +8,8 @@ import SwiftUI
 struct SearchBar: View {
 
 	@Binding var searchText: String
-	@State var isSearching: Bool = false {
-		didSet {
-			print(isSearching)
-		}
-	}
+	@State var isSearching: Bool = false
+	
 	var placeholder = "Поиск..."
 
 	var body: some View {

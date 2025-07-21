@@ -12,7 +12,7 @@ struct PrimaryButtonStyle: ButtonStyle {
 		configuration.label
 			.foregroundStyle(.white)
 			.font(.ypSmallBold)
-			.frame(height: 60)
+			.frame(height: Constants.buttonHeight)
 			.frame(maxWidth: .infinity)
 			.background(
 				RoundedRectangle(cornerRadius: Constants.cornerRadius)

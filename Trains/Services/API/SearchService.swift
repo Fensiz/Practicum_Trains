@@ -29,7 +29,6 @@ final actor SearchService: SearchServiceProtocol {
 	}
 
 	func getScheduleBetweenStations(from: String, to: String) async throws -> Segments {
-		print(from, to)
 		let response = try await client.getScheduleBetweenStations(
 			query: .init(
 				apikey: apikey,

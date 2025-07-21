@@ -15,9 +15,12 @@ struct CheckboxToggleStyle: ToggleStyle {
 			HStack {
 				configuration.label
 				Spacer()
-				Image(systemName: configuration.isOn ? "checkmark.square.fill" : "square")
+				Image(configuration.isOn ? "checkbox.on" : "checkbox.off")
 					.resizable()
-					.frame(width: 20, height: 20)
+					.frame(
+						width: Constants.logoSmallSize,
+						height: Constants.logoSmallSize
+					)
 					.foregroundColor(.primary)
 			}
 		}

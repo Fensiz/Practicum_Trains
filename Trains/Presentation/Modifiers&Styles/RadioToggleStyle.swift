@@ -17,9 +17,13 @@ struct RadioToggleStyle: ToggleStyle {
 			HStack {
 				configuration.label
 				Spacer()
-				Image(systemName: configuration.isOn ? "largecircle.fill.circle" : "circle")
+				Image(configuration.isOn ? "radio.on" : "radio.off")
+					.resizable()
+					.frame(
+						width: Constants.logoSmallSize,
+						height: Constants.logoSmallSize
+					)
 					.foregroundColor(.primary)
-					.imageScale(.large)
 			}
 		}
 		.buttonStyle(.plain)

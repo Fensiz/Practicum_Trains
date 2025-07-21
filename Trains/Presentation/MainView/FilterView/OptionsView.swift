@@ -10,90 +10,40 @@ import SwiftUI
 struct OptionsView: View {
 	@ObservedObject private var viewModel: MainViewModel
 	@Binding private var path: [Route]
+	@State private var selectedTimeIntervals: [Bool]
+	@State private var transferFilter: Bool?
 
 	init(viewModel: MainViewModel, path: Binding<[Route]>) {
 		self.viewModel = viewModel
 		self._path = path
+		if let transferFilter = viewModel.transferFilter {
+			_transferFilter = .init(initialValue: transferFilter)
+		} else {
+			_transferFilter = .init(initialValue: nil)
+		}
+		selectedTimeIntervals = viewModel.selectedTimeIntervals
 	}
 
 	var body: some View {
 		VStack(spacing: 0) {
-			TimeOptionView(selections: $viewModel.selectedTimeIntervals)
-			TransferView(isTransferEnabled: $viewModel.transferFilter)
+			TimeOptionView(selections: $selectedTimeIntervals)
+			TransferView(isTransferEnabled: $transferFilter)
 			Spacer()
-			if let _ = viewModel.transferFilter, viewModel.selectedTimeIntervals.reduce(false, { $0 || $1 }) {
+			if let _ = transferFilter, selectedTimeIntervals.reduce(false, { $0 || $1 }) {
 				Button("Применить") {
+					viewModel.transferFilter = transferFilter
+					viewModel.selectedTimeIntervals = selectedTimeIntervals
 					viewModel.applyFilters()
 					path.removeLast()
 				}
 				.buttonStyle(PrimaryButtonStyle())
-				.padding(.bottom, 24)
-				.padding(.horizontal, 16)
+				.padding(.bottom, Constants.paddingMedium)
+				.padding(.horizontal, Constants.padding)
 			}
 		}
 		.withBackToolbar(path: $path)
 	}
 }
-
-struct TimeOptionView: View {
-	@Binding var selections: [Bool]
-
-	private let intervals: [String] = [
-		"Утро 06:00 - 12:00",
-		"День 12:00 - 18:00",
-		"Вечер 18:00 - 00:00",
-		"Ночь 00:00 - 06:00"
-	]
-
-	var body: some View {
-		VStack(alignment: .leading, spacing: 0) {
-			Text("Время отправления")
-				.font(.ypMediumBold)
-				.padding(.vertical, 16)
-
-			ForEach(intervals.indices, id: \.self) { index in
-				Toggle(intervals[index], isOn: $selections[index])
-					.font(.ypMedium)
-					.toggleStyle(CheckboxToggleStyle())
-					.frame(height: 60)
-			}
-		}
-		.frame(maxWidth: .infinity, alignment: .leading)
-		.padding(.horizontal, 16)
-	}
-}
-
-struct TransferView: View {
-	@Binding var isTransferEnabled: Bool?
-	var body: some View {
-		VStack(alignment: .leading, spacing: 0) {
-			Text("Показывать варианты с пересадками")
-				.font(.ypMediumBold)
-				.padding(.vertical, Constants.padding)
-
-			Toggle("Да", isOn: Binding(
-				get: { isTransferEnabled ?? false },
-				set: { isTransferEnabled = $0 }
-			))
-			.toggleStyle(RadioToggleStyle())
-
-			Toggle("Нет", isOn: Binding(
-				get: {
-					guard let isTransferEnabled else { return false }
-					return !isTransferEnabled
-				},
-				set: { isTransferEnabled = !$0 }
-			))
-			.toggleStyle(RadioToggleStyle())
-		}
-		.frame(maxWidth: .infinity, alignment: .leading)
-		.padding(.horizontal, Constants.padding)
-	}
-}
-
-//#Preview {
-//	OptionsView()
-//}
 
 #Preview {
 	TransferView(isTransferEnabled: .constant(false))

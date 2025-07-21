@@ -9,25 +9,6 @@ import SwiftUI
 import Combine
 
 
-typealias Station = Components.Schemas.Station
-typealias SettlementShort = (code: String, title: String, stations: [Station])
-
-struct SimpleStation: Identifiable {
-	let title: String
-	let code: String
-	var id: String { code }
-}
-
-struct SimpleTrip: Identifiable {
-	let id: UUID = .init()
-	var logoUrl: String?
-	var carrierName: String
-	var additionalInfo: String?
-	var departureTime: String?
-	var arrivalTime: String?
-	var duration: String?
-	var date: String?
-}
 
 @MainActor final class MainViewModel: ObservableObject {
 	@Published var stations: [SimpleStation] = []
@@ -45,12 +26,15 @@ struct SimpleTrip: Identifiable {
 	@Published var transferFilter: Bool? = nil
 	@Published var filteredTrips: [SimpleTrip] = []
 
-	private var cancellables = Set<AnyCancellable>()
+	@Published var fetchError: (any Error)? = nil
+
+	private var allStations: [SimpleStation] = []
+	private var allCities: [SettlementShort] = []
+
 	private var loader: any SettlementLoaderProtocol
 	private var searchService: any SearchServiceProtocol
 	private var carrierService: any CarrierServiceProtocol
-	private var allStations: [SimpleStation] = []
-	private var allCities: [SettlementShort] = []
+	private var cancellables = Set<AnyCancellable>()
 
 	init(
 		loader: any SettlementLoaderProtocol,
@@ -68,14 +52,14 @@ struct SimpleTrip: Identifiable {
 			}
 			.store(in: &cancellables)
 		$citySearchText
-			.debounce(for: .milliseconds(600), scheduler: RunLoop.main)
+			.debounce(for: .milliseconds(Constants.debounceDelay), scheduler: RunLoop.main)
 			.removeDuplicates()
 			.sink { [weak self] text in
 				self?.filterCities(with: text)
 			}
 			.store(in: &cancellables)
 		$stationSearchText
-			.debounce(for: .milliseconds(600), scheduler: RunLoop.main)
+			.debounce(for: .milliseconds(Constants.debounceDelay), scheduler: RunLoop.main)
 			.removeDuplicates()
 			.sink { [weak self] text in
 				self?.filterStations(with: text)
@@ -110,7 +94,6 @@ struct SimpleTrip: Identifiable {
 		else { return }
 		let response = try await searchService.getScheduleBetweenStations(from: from, to: to)
 		guard let segments = response.segments else { return }
-		print(segments)
 
 		trips = try await withThrowingTaskGroup(of: SimpleTrip?.self) { group in
 			var result: [SimpleTrip] = []
@@ -132,7 +115,7 @@ struct SimpleTrip: Identifiable {
 
 						var transfer: String? = nil
 						if let title = segment.transfers?.first?.title {
-							transfer = title
+							transfer = "С пересадкой в \(title)"
 						}
 
 						let carrierInfo = try? await self.carrierService.getCarrierInfo(code: "\(carrierCode)")
@@ -141,10 +124,10 @@ struct SimpleTrip: Identifiable {
 							logoUrl: carrierInfo?.carrier?.logo,
 							carrierName: carrierTitle,
 							additionalInfo: transfer,
-							departureTime: self.formatTime(from: departure),
-							arrivalTime: self.formatTime(from: arrival),
-							duration: self.secondsToRoundedHoursString(detail.duration),
-							date: self.formatDateString(detail.start_date)
+							departureTime: Utils.formatTime(from: departure),
+							arrivalTime: Utils.formatTime(from: arrival),
+							duration: Utils.secondsToRoundedHoursString(detail.duration),
+							date: Utils.formatDateString(detail.start_date)
 						)
 					} else {
 						guard
@@ -156,17 +139,17 @@ struct SimpleTrip: Identifiable {
 
 						var transfer: String? = nil
 						if let title = segment.transfers?.first?.title {
-							transfer = title
+							transfer = "С пересадкой в \(title)"
 						}
 
 						return SimpleTrip(
 							logoUrl: carrier.logo,
 							carrierName: carrierTitle,
 							additionalInfo: transfer,
-							departureTime: self.formatTime(from: departure),
-							arrivalTime: self.formatTime(from: arrival),
-							duration: self.secondsToRoundedHoursString(segment.duration),
-							date: self.formatDateString(segment.start_date)
+							departureTime: Utils.formatTime(from: departure),
+							arrivalTime: Utils.formatTime(from: arrival),
+							duration: Utils.secondsToRoundedHoursString(segment.duration),
+							date: Utils.formatDateString(segment.start_date)
 						)
 					}
 				}
@@ -186,60 +169,6 @@ struct SimpleTrip: Identifiable {
 		}
 		applyFilters()
 	}
-
-	private nonisolated func formatTime(from isoString: String) -> String? {
-		let formatter = ISO8601DateFormatter()
-	 formatter.formatOptions = [.withInternetDateTime]
-
-	 guard let date = formatter.date(from: isoString) else { return nil }
-
-	 let outputFormatter = DateFormatter()
-	 outputFormatter.dateFormat = "HH:mm"
-
-	 return outputFormatter.string(from: date)
- }
-
-	private nonisolated func formatDateString(_ date: String?) -> String {
-		guard let date else { return "-" }
-		let inputFormatter = DateFormatter()
-		inputFormatter.dateFormat = "yyyy-MM-dd"
-		inputFormatter.locale = Locale(identifier: "ru_RU")
-
-		if let date = inputFormatter.date(from: date) {
-			let outputFormatter = DateFormatter()
-			outputFormatter.dateFormat = "d MMMM"
-			outputFormatter.locale = Locale(identifier: "ru_RU")
-
-			let formatted = outputFormatter.string(from: date)
-			return formatted
-		}
-		return "-"
-	}
-
-	private nonisolated func secondsToRoundedHoursString(_ seconds: Int?) -> String {
-		guard let seconds else { return "-" }
-		let hours = seconds / 3600
-		let remainingSeconds = seconds % 3600
-		let roundedHours = hours + (remainingSeconds > 0 ? 1 : 0)
-
-		switch roundedHours {
-		case 1:
-			return "1 час"
-		case 2...4:
-			return "\(roundedHours) часа"
-		default:
-			return "\(roundedHours) часов"
-		}
-	}
-
-	private func filterStations(with text: String) {
-		stations = allStations.filter { text.isEmpty || $0.title.localizedCaseInsensitiveContains(text) }
-	}
-
-	private func filterCities(with text: String) {
-		cities = allCities.filter { text.isEmpty || $0.title.localizedCaseInsensitiveContains(text) }
-	}
-
 
 	func applyFilters() {
 		let timeIntervals: [(start: Int, end: Int)] = [
@@ -275,5 +204,13 @@ struct SimpleTrip: Identifiable {
 				}
 			})
 		}
+	}
+
+	private func filterStations(with text: String) {
+		stations = allStations.filter { text.isEmpty || $0.title.localizedCaseInsensitiveContains(text) }
+	}
+
+	private func filterCities(with text: String) {
+		cities = allCities.filter { text.isEmpty || $0.title.localizedCaseInsensitiveContains(text) }
 	}
 }
