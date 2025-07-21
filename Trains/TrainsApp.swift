@@ -52,6 +52,7 @@ struct TrainsApp: App {
 		}
 	}
 }
+
 struct ErrorView: View {
 	let error: any Error
 	let onRetry: () -> Void

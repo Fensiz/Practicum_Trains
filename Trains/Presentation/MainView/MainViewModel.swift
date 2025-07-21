@@ -8,8 +8,6 @@
 import SwiftUI
 import Combine
 
-
-
 @MainActor final class MainViewModel: ObservableObject {
 	@Published var stations: [SimpleStation] = []
 	@Published var cities: [SettlementShort] = []
@@ -46,10 +44,16 @@ import Combine
 		self.carrierService = carrierService
 		loader.settlementsPublisher
 			.receive(on: RunLoop.main)
-			.sink { [weak self] in
-				self?.allCities = $0
+			.sink(receiveCompletion: { [weak self] completion in
+				if case let .failure(error) = completion {
+					if self?.fetchError == nil {
+						self?.fetchError = error
+					}
+				}
+			}, receiveValue: { [weak self] settlements in
+				self?.allCities = settlements
 				self?.filterCities(with: self?.citySearchText ?? "")
-			}
+			})
 			.store(in: &cancellables)
 		$citySearchText
 			.debounce(for: .milliseconds(Constants.debounceDelay), scheduler: RunLoop.main)
@@ -92,7 +96,17 @@ import Combine
 			let from = selectedFromStation?.code,
 			let to = selectedToStation?.code
 		else { return }
-		let response = try await searchService.getScheduleBetweenStations(from: from, to: to)
+		let response: Segments
+		do {
+			response = try await searchService.getScheduleBetweenStations(from: from, to: to)
+		} catch {
+			await MainActor.run {
+				if self.fetchError == nil {
+					self.fetchError = error
+				}
+			}
+			return
+		}
 		guard let segments = response.segments else { return }
 
 		trips = try await withThrowingTaskGroup(of: SimpleTrip?.self) { group in
@@ -118,7 +132,16 @@ import Combine
 							transfer = "С пересадкой в \(title)"
 						}
 
-						let carrierInfo = try? await self.carrierService.getCarrierInfo(code: "\(carrierCode)")
+						var carrierInfo: CarrierResponse?
+						do {
+							carrierInfo = try await self.carrierService.getCarrierInfo(code: "\(carrierCode)")
+						} catch {
+							await MainActor.run {
+								if self.fetchError == nil {
+									self.fetchError = error
+								}
+							}
+						}
 
 						return SimpleTrip(
 							logoUrl: carrierInfo?.carrier?.logo,

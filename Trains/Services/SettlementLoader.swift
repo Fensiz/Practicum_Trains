@@ -8,7 +8,7 @@
 import Combine
 
 @MainActor protocol SettlementLoaderProtocol {
-	var settlementsPublisher: AnyPublisher<[SettlementShort], Never> { get }
+	var settlementsPublisher: AnyPublisher<[SettlementShort], any Error> { get }
 	func fetchAllStations()
 }
 
@@ -16,8 +16,8 @@ import Combine
 	private let stationService: StationListService
 	private let cacheService: any StationCacheServiceProtocol
 
-	private let subject = CurrentValueSubject<[SettlementShort], Never>([])
-	var settlementsPublisher: AnyPublisher<[SettlementShort], Never> {
+	private let subject = CurrentValueSubject<[SettlementShort], any Error>([])
+	var settlementsPublisher: AnyPublisher<[SettlementShort], any Error> {
 		subject.eraseToAnyPublisher()
 	}
 
@@ -45,6 +45,9 @@ import Combine
 					self.subject.send(settlements)
 				}
 			} catch {
+				await MainActor.run {
+					self.subject.send(completion: .failure(error))
+				}
 				print(#function, error)
 			}
 		}

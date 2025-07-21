@@ -20,97 +20,118 @@ struct MainView: View {
 	]
 
 	init(viewModel: MainViewModel) {
+		print(">>>>INIT")
 		_viewModel = .init(wrappedValue: viewModel)
 	}
 
 	var body: some View {
-		NavigationStack(path: $path) {
-			VStack {
-				// Горизонтальная лента
-				ScrollView(.horizontal) {
-					LazyHGrid(rows: [.init(.fixed(92), spacing: 12)]) {
-						ForEach(0..<10) { i in
-							stories[i % stories.count]
-								.resizable()
-								.aspectRatio(contentMode: .fill)
-								.frame(width: 92, height: 140)
-								.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+		ZStack {
+			NavigationStack(path: $path) {
+				VStack {
+					// Горизонтальная лента
+					ScrollView(.horizontal) {
+						LazyHGrid(rows: [.init(.fixed(92), spacing: 12)]) {
+							ForEach(0..<10) { i in
+								stories[i % stories.count]
+									.resizable()
+									.aspectRatio(contentMode: .fill)
+									.frame(width: 92, height: 140)
+									.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+							}
 						}
+						.padding(.horizontal, Constants.padding)
 					}
-					.padding(.horizontal, Constants.padding)
-				}
-				.frame(height: 140)
-				.padding(.vertical, 24)
-				.scrollIndicators(.hidden)
+					.frame(height: 140)
+					.padding(.vertical, 24)
+					.scrollIndicators(.hidden)
 
-				// Панель выбора городов
-				HStack(spacing: 16) {
-					VStack(spacing: 0) {
-						CityButton(title: "Откуда", value: viewModel.selectedFromStation?.title ?? "") {
-							path.append(.selectCity(.from))
+					// Панель выбора городов
+					HStack(spacing: 16) {
+						VStack(spacing: 0) {
+							CityButton(title: "Откуда", value: viewModel.selectedFromStation?.title ?? "") {
+								path.append(.selectCity(.from))
+							}
+							CityButton(title: "Куда", value: viewModel.selectedToStation?.title ?? "") {
+								path.append(.selectCity(.to))
+							}
 						}
-						CityButton(title: "Куда", value: viewModel.selectedToStation?.title ?? "") {
-							path.append(.selectCity(.to))
+						.padding(.horizontal, Constants.padding)
+						.background(
+							RoundedRectangle(
+								cornerRadius: Constants.cornerRadiusMedium
+							).fill(.white)
+						)
+
+						Button {
+							swap(&viewModel.selectedToStation, &viewModel.selectedFromStation)
+						} label: {
+							Image("swap")
+								.frame(width: 36, height: 36)
+								.background(
+									Circle()
+										.fill(Color.white)
+										.frame(width: 36, height: 36)
+								)
 						}
 					}
-					.padding(.horizontal, Constants.padding)
+					.padding(Constants.padding)
 					.background(
 						RoundedRectangle(
 							cornerRadius: Constants.cornerRadiusMedium
-						).fill(.white)
+						).fill(.ypBlue)
 					)
+					.padding(.horizontal, Constants.padding)
+					.padding(.top, 20)
+					.padding(.bottom, Constants.padding)
 
-					Button {
-						swap(&viewModel.selectedToStation, &viewModel.selectedFromStation)
-					} label: {
-						Image("swap")
-							.frame(width: 36, height: 36)
-							.background(
-								Circle()
-									.fill(Color.white)
-									.frame(width: 36, height: 36)
-							)
-					}
-				}
-				.padding(Constants.padding)
-				.background(
-					RoundedRectangle(
-						cornerRadius: Constants.cornerRadiusMedium
-					).fill(.ypBlue)
-				)
-				.padding(.horizontal, Constants.padding)
-				.padding(.top, 20)
-				.padding(.bottom, Constants.padding)
-
-				// Кнопка Найти
-				if viewModel.selectedToStation != nil && viewModel.selectedFromStation != nil {
-					Button {
-						Task {
-							try? await viewModel.fetchTrips()
+					// Кнопка Найти
+					if viewModel.selectedToStation != nil && viewModel.selectedFromStation != nil {
+						Button {
+							Task {
+								try? await viewModel.fetchTrips()
+							}
+							path.append(.trips)
+						} label: {
+							Text("Найти")
+								.font(.ypSmallBold)
+								.foregroundStyle(.white)
+								.frame(width: 150, height: Constants.buttonHeight)
+								.background(Color.ypBlue)
+								.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
 						}
-						path.append(.trips)
-					} label: {
-						Text("Найти")
-							.font(.ypSmallBold)
-							.foregroundStyle(.white)
-							.frame(width: 150, height: Constants.buttonHeight)
-							.background(Color.ypBlue)
-							.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+					}
+
+					Spacer()
+				}
+				.navigationDestination(for: Route.self) { route in
+					switch route {
+						case .selectCity(let direction):
+							CitySelectionView(viewModel: viewModel, path: $path, direction: direction)
+						case .selectStation(let direction):
+							StationSelectionView(vm: viewModel, path: $path, direction: direction)
+						case .trips:
+							TripsView(viewModel: viewModel, path: $path)
+						case .filters:
+							OptionsView(viewModel: viewModel, path: $path)
 					}
 				}
-
-				Spacer()
 			}
-			.navigationDestination(for: Route.self) { route in
-				switch route {
-					case .selectCity(let direction):
-						CitySelectionView(viewModel: viewModel, path: $path, direction: direction)
-					case .selectStation(let direction):
-						StationSelectionView(vm: viewModel, path: $path, direction: direction)
-					case .trips:
-						TripsView(viewModel: viewModel, path: $path)
-					case .filters:
-						OptionsView(viewModel: viewModel, path: $path)
+			if viewModel.fetchError != nil {
+				if let error = viewModel.fetchError as? ClientError,
+				   let underlyingError = error.underlyingError as? URLError {
+					VStack {
+						switch underlyingError.code {
+							case .notConnectedToInternet:
+								NoInternetErrorView()
+							case .badServerResponse, .timedOut:
+								ServerErrorView()
+							default:
+								UnknownErrorView()
+						}
+					}
+					.onTapGesture {
+						viewModel.fetchError = nil
+					}
 				}
 			}
 		}
