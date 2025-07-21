@@ -40,9 +40,3 @@ struct CitySelectionView: View {
 		}
 	}
 }
-
-enum Direction {
-	case from, to
-}
-
-

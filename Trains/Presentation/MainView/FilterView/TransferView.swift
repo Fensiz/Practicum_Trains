@@ -9,6 +9,7 @@ import SwiftUI
 
 struct TransferView: View {
 	@Binding var isTransferEnabled: Bool?
+	
 	var body: some View {
 		VStack(alignment: .leading, spacing: 0) {
 			Text("Показывать варианты с пересадками")
