@@ -48,7 +48,6 @@ import Combine
 				await MainActor.run {
 					self.subject.send(completion: .failure(error))
 				}
-				print(#function, error)
 			}
 		}
 	}

@@ -20,7 +20,6 @@ struct MainView: View {
 	]
 
 	init(viewModel: MainViewModel) {
-		print(">>>>INIT")
 		_viewModel = .init(wrappedValue: viewModel)
 	}
 
