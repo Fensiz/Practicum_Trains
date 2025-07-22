@@ -8,41 +8,14 @@
 import SwiftUI
 
 struct MainView: View {
-	@State private var path: [Route] = []
-	@StateObject private var viewModel: MainViewModel
-	private let stories: [Image] = [
-		Image("stories_1"),
-		Image("stories_2"),
-		Image("stories_3"),
-		Image("stories_4"),
-		Image("stories_5"),
-		Image("stories_6"),
-	]
-
-	init(viewModel: MainViewModel) {
-		_viewModel = .init(wrappedValue: viewModel)
-	}
+	@ObservedObject var viewModel: MainViewModel
+	@Binding var path: [Route]
 
 	var body: some View {
 		ZStack {
 			NavigationStack(path: $path) {
 				VStack {
-					// Горизонтальная лента
-					ScrollView(.horizontal) {
-						LazyHGrid(rows: [.init(.fixed(92), spacing: 12)]) {
-							ForEach(0..<10) { i in
-								stories[i % stories.count]
-									.resizable()
-									.aspectRatio(contentMode: .fill)
-									.frame(width: 92, height: 140)
-									.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
-							}
-						}
-						.padding(.horizontal, Constants.padding)
-					}
-					.frame(height: 140)
-					.padding(.vertical, 24)
-					.scrollIndicators(.hidden)
+					StoriesView()
 
 					// Панель выбора городов
 					HStack(spacing: 16) {
@@ -106,72 +79,17 @@ struct MainView: View {
 					switch route {
 						case .selectCity(let direction):
 							CitySelectionView(viewModel: viewModel, path: $path, direction: direction)
+								.toolbar(.hidden, for: .tabBar)
 						case .selectStation(let direction):
 							StationSelectionView(vm: viewModel, path: $path, direction: direction)
 						case .trips:
 							TripsView(viewModel: viewModel, path: $path)
+								.toolbar(.hidden, for: .tabBar)
 						case .filters:
 							OptionsView(viewModel: viewModel, path: $path)
 					}
 				}
 			}
-			if viewModel.fetchError != nil {
-				if let error = viewModel.fetchError as? ClientError,
-				   let underlyingError = error.underlyingError as? URLError {
-					VStack {
-						switch underlyingError.code {
-							case .notConnectedToInternet:
-								NoInternetErrorView()
-							case .badServerResponse, .timedOut:
-								ServerErrorView()
-							default:
-								UnknownErrorView()
-						}
-					}
-					.onTapGesture {
-						viewModel.fetchError = nil
-					}
-				}
-			}
 		}
 	}
-}
-
-enum Route: Hashable {
-	case selectCity(Direction)
-	case selectStation(Direction)
-	case trips
-	case filters
-
-	static func == (lhs: Route, rhs: Route) -> Bool {
-		switch (lhs, rhs) {
-			case (.selectCity, .selectCity): true
-			case (.selectStation, .selectStation): true
-			case (.trips, .trips): true
-			case (.filters, .filters): true
-			default: false
-		}
-	}
-
-	func hash(into hasher: inout Hasher) {
-		// Уникальные константы, чтобы отличать маршруты
-		switch self {
-			case .selectCity:
-				hasher.combine("selectCity")
-			case .selectStation:
-				hasher.combine("selectStation")
-			case .trips:
-				hasher.combine("trips")
-			case .filters:
-				hasher.combine("filters")
-		}
-	}
-}
-
-#Preview {
-	ContentView()
-}
-
-#Preview {
-	SettingsView()
 }

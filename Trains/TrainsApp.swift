@@ -14,7 +14,7 @@ struct TrainsApp: App {
 	var body: some Scene {
 		WindowGroup {
 			if let dependencies = appState.dependencies {
-				ContentView()
+				ContentView(viewModel: dependencies.mainViewModel)
 					.tint(.ypBlue)
 					.environmentObject(dependencies)
 			} else if let error = appState.error {

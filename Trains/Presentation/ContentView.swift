@@ -8,39 +8,48 @@
 import SwiftUI
 
 struct ContentView: View {
-//	private let methods = [
-//		(name: "testCarrierService", action: TestMethods.testFetchCarrier),
-//		(name: "testCopyrightService", action: TestMethods.testFetchCopyright),
-//		(name: "testNearestSettlementService", action: TestMethods.testFetchNearestSettlement),
-//		(name: "testNearestStationsService", action: TestMethods.testFetchNearestStations),
-//		(name: "testScheduleService", action: TestMethods.testFetchStationSchedule),
-//		(name: "testSearchService", action: TestMethods.testFetchScheduleBetweenStations),
-//		(name: "testStationListService", action: TestMethods.testFetchStationList),
-//		(name: "testThreadService", action: TestMethods.testFetchRouteStations),
-//	]
 	@AppStorage("isDarkMode") private var isDarkThemeEnabled = false
 	@EnvironmentObject private var dependencies: AppDependencies
+	@State private var path: [Route] = []
+	@StateObject private var viewModel: MainViewModel
 
-	init() {
+	init(viewModel: MainViewModel) {
 		Utils.setupTabBarAppearance()
+		_viewModel = .init(wrappedValue: viewModel)
 	}
 
 	var body: some View {
-		TabView {
-			MainView(viewModel: dependencies.mainViewModel)
-				.tabItem {
-					Image("Schedule")
+		ZStack {
+			TabView {
+				MainView(viewModel: dependencies.mainViewModel, path: $path)
+					.tabItem {
+						Image("Schedule")
+					}
+				SettingsView()
+					.tabItem {
+						Image("Settings")
+					}
+			}
+			if viewModel.fetchError != nil {
+				if let error = viewModel.fetchError as? ClientError,
+				   let underlyingError = error.underlyingError as? URLError {
+					VStack {
+						switch underlyingError.code {
+							case .notConnectedToInternet:
+								NoInternetErrorView()
+							case .badServerResponse, .timedOut:
+								ServerErrorView()
+							default:
+								UnknownErrorView()
+						}
+					}
+					.onTapGesture {
+						viewModel.fetchError = nil
+					}
 				}
-			SettingsView()
-				.tabItem {
-					Image("Settings")
-				}
+			}
 		}
 		.tint(.ypBlack)
 		.preferredColorScheme(isDarkThemeEnabled ? .dark : .light)
 	}
-}
-
-#Preview {
-	ContentView()
 }
