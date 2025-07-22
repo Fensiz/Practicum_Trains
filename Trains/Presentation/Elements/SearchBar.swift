@@ -13,7 +13,7 @@ struct SearchBar: View {
 	var placeholder = "Поиск..."
 
 	var body: some View {
-		HStack (spacing: 0) {
+		HStack(spacing: 0) {
 			HStack (spacing: 0) {
 				HStack {
 					TextField(placeholder, text: $searchText)
