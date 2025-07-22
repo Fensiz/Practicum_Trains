@@ -12,7 +12,7 @@ struct SettingsView: View {
 	@State private var path: [String] = []
 	public var body: some View {
 		NavigationStack(path: $path) {
-			VStack(spacing: 0) {
+			VStack(spacing: .zero) {
 				List {
 					Toggle(isOn: $isDarkThemeEnabled) {
 						Text("Темная тема")

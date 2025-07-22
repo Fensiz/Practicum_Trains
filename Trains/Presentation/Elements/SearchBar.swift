@@ -13,8 +13,8 @@ struct SearchBar: View {
 	var placeholder = "Поиск..."
 
 	var body: some View {
-		HStack(spacing: 0) {
-			HStack (spacing: 0) {
+		HStack(spacing: .zero) {
+			HStack (spacing: .zero) {
 				HStack {
 					TextField(placeholder, text: $searchText)
 						.font(.ypMedium)

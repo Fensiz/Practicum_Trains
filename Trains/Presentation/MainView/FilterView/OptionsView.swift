@@ -25,7 +25,7 @@ struct OptionsView: View {
 	}
 
 	var body: some View {
-		VStack(spacing: 0) {
+		VStack(spacing: .zero) {
 			TimeOptionView(selections: $selectedTimeIntervals)
 			TransferView(isTransferEnabled: $transferFilter)
 			Spacer()

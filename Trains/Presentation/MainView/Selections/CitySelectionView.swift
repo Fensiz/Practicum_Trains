@@ -13,7 +13,7 @@ struct CitySelectionView: View {
 	let direction: Direction
 
 	public var body: some View {
-		VStack(spacing: 0) {
+		VStack(spacing: .zero) {
 			SearchBar(searchText: $viewModel.citySearchText, placeholder: "Введите запрос")
 				.padding(.bottom, Constants.padding)
 			if viewModel.cities.isEmpty && !viewModel.citySearchText.isEmpty {

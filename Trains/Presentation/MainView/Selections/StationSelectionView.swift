@@ -13,7 +13,7 @@ struct StationSelectionView: View {
 	let direction: Direction
 
 	public var body: some View {
-		VStack(spacing: 0) {
+		VStack(spacing: .zero) {
 			SearchBar(searchText: $vm.stationSearchText, placeholder: "Введите запрос")
 				.padding(.bottom, Constants.padding)
 			if vm.stations.isEmpty {

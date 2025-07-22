@@ -19,7 +19,7 @@ struct MainView: View {
 
 					// Панель выбора городов
 					HStack(spacing: 16) {
-						VStack(spacing: 0) {
+						VStack(spacing: .zero) {
 							CityButton(title: "Откуда", value: viewModel.selectedFromStation?.title ?? "") {
 								path.append(.selectCity(.from))
 							}

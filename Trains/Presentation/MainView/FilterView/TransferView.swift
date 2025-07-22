@@ -11,7 +11,7 @@ struct TransferView: View {
 	@Binding var isTransferEnabled: Bool?
 	
 	var body: some View {
-		VStack(alignment: .leading, spacing: 0) {
+		VStack(alignment: .leading, spacing: .zero) {
 			Text("Показывать варианты с пересадками")
 				.font(.ypMediumBold)
 				.padding(.vertical, Constants.padding)

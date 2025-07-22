@@ -18,7 +18,7 @@ struct TimeOptionView: View {
 	]
 
 	var body: some View {
-		VStack(alignment: .leading, spacing: 0) {
+		VStack(alignment: .leading, spacing: .zero) {
 			Text("Время отправления")
 				.font(.ypMediumBold)
 				.padding(.vertical, 16)
