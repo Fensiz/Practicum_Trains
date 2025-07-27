@@ -75,4 +75,10 @@ enum Utils {
 		guard let date = isoFormatter.date(from: isoString) else { return nil }
 		return timeOutputFormatter.string(from: date)
 	}
+
+	@MainActor static var safeAreaInsets: UIEdgeInsets? {
+		UIApplication.shared.connectedScenes
+			.flatMap { ($0 as? UIWindowScene)?.windows ?? [] }
+			.first { $0.isKeyWindow }?.safeAreaInsets
+	}
 }

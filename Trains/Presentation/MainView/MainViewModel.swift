@@ -9,6 +9,10 @@ import SwiftUI
 import Combine
 
 @MainActor final class MainViewModel: ObservableObject {
+	@Published var stories: [Story] = [.story1, .story2, .story1, .story2]
+	@Published var isStoriesShowing: Bool = false
+	@Published var selectedStoryId: Int? = nil
+
 	@Published var stations: [SimpleStation] = []
 	@Published var cities: [SettlementShort] = []
 	@Published var citySearchText = ""
@@ -25,6 +29,13 @@ import Combine
 	@Published var filteredTrips: [SimpleTrip] = []
 
 	@Published var fetchError: (any Error)? = nil
+
+	var isFindButtonShowing: Bool {
+		guard let selectedFromStation, let selectedToStation else {
+			return false
+		}
+		return selectedFromStation != selectedToStation
+	}
 
 	private var allStations: [SimpleStation] = []
 	private var allCities: [SettlementShort] = []
@@ -90,6 +101,11 @@ import Combine
 		stations = allStations
 	}
 
+	func fetchTripsTask() {
+		Task {
+			try? await fetchTrips()
+		}
+	}
 	func fetchTrips() async throws {
 		trips = []
 		guard
@@ -235,5 +251,11 @@ import Combine
 
 	private func filterCities(with text: String) {
 		cities = allCities.filter { text.isEmpty || $0.title.localizedCaseInsensitiveContains(text) }
+	}
+
+	func hideStories() {
+		withAnimation(.spring()) {
+			isStoriesShowing = false
+		}
 	}
 }
