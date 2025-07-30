@@ -20,15 +20,39 @@ struct ContentView: View {
 
 	var body: some View {
 		ZStack {
-			TabView {
-				MainView(viewModel: dependencies.mainViewModel, path: $path)
+			NavigationStack(path: $path) {
+				TabView {
+					let storiesViewModel = StoriesViewModel(stories: [.story1, .story2, .story3])
+					MainView(
+						viewModel: dependencies.mainViewModel,
+						storiesViewModel: storiesViewModel,
+						path: $path
+					)
 					.tabItem {
 						Image("Schedule")
 					}
-				SettingsView()
-					.tabItem {
-						Image("Settings")
+					SettingsView(path: $path)
+						.tabItem {
+							Image("Settings")
+						}
+				}
+				.navigationDestination(for: Route.self) { route in
+					switch route {
+						case .selectCity(let direction):
+							CitySelectionView(viewModel: viewModel, path: $path, direction: direction)
+						case .selectStation(let direction):
+							StationSelectionView(vm: viewModel, path: $path, direction: direction)
+						case .trips:
+							TripsView(viewModel: viewModel, path: $path)
+						case .filters:
+							OptionsView(viewModel: viewModel, path: $path)
+						case .agreement:
+							AgreementView(path: $path)
+						case .carrierDetails(let data):
+							CarrierInfoView(path: $path, carrier: data)
 					}
+				}
+
 			}
 			if viewModel.fetchError != nil {
 				if let error = viewModel.fetchError as? ClientError,

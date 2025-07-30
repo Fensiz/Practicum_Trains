@@ -8,25 +8,44 @@
 import Combine
 import SwiftUI
 
+struct StoryBlock {
+	let stories: [Story]
+	let isViewed: Bool
+}
+
 final class StoriesViewModel: ObservableObject {
+
+	// MARK: - Inner Types
+
 	private struct Configuration {
 		let timerTickInternal: TimeInterval
 		let progressPerTick: CGFloat
 
-		init(storiesCount: Int, secondsPerStory: TimeInterval = 5, timerTickInternal: TimeInterval = 0.05) {
+		init(
+			storiesCount: Int,
+			secondsPerStory: TimeInterval = 5,
+			timerTickInternal: TimeInterval = 0.05
+		) {
 			self.timerTickInternal = timerTickInternal
 			self.progressPerTick = 1.0 / CGFloat(storiesCount) / secondsPerStory * timerTickInternal
 		}
 	}
 
+	// MARK: - @Published properties
+
 	@Published var progress: CGFloat = 0
-	@Binding private(set) var stories: [Story]
+	@Published private(set) var stories: [Story]
+	@Published var isStoriesShowing: Bool = false
+	@Published var finalOffset: CGFloat = 0
+
+	// MARK: - Public properties
 
 	var currentStoryIndex: Int { Int(progress * CGFloat(stories.count)) }
 	var currentStory: Story { stories.isEmpty ? .story1 : stories[currentStoryIndex] }
 
-	private let selectedId: Int
-	private let closeAction: () -> Void
+	// MARK: - Private properties
+
+	private var selectedId: Int = 0
 	private var configuration: Configuration
 	private var timer: Timer.TimerPublisher? {
 		didSet {
@@ -40,13 +59,15 @@ final class StoriesViewModel: ObservableObject {
 	}
 	private var cancellable: AnyCancellable?
 
-	init(stories: Binding<[Story]>, selectedId: Int, closeAction: @escaping () -> Void) {
-		self._stories = stories
-		self.selectedId = selectedId
-		self.closeAction = closeAction
+	// MARK: - Initializators
+
+	init(stories: [Story]) {
+		self._stories = .init(initialValue: stories)
 		self.configuration = Configuration(storiesCount: stories.count)
 		self.progress = CGFloat(selectedId) / CGFloat(stories.count)
 	}
+
+	// MARK: - Public methods
 
 	func start() {
 		configuration = Configuration(storiesCount: stories.count)
@@ -63,15 +84,26 @@ final class StoriesViewModel: ObservableObject {
 		}
 	}
 
+	func showStory(with id: Int) {
+		self.finalOffset = 0
+		self.selectedId = id
+		self.isStoriesShowing = true
+		start()
+		print("+")
+	}
+
 	func close() {
 		self.stop()
-		self.closeAction()
+		self.isStoriesShowing = false
+		print("-")
 	}
 
 	func stop() {
 		cancellable?.cancel()
 		cancellable = nil
 	}
+
+	// MARK: - Private methods
 
 	private func tick() {
 		markCurrentStoryAsViewed()

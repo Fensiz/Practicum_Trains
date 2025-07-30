@@ -70,58 +70,36 @@ struct FindButton: View {
 }
 struct MainView: View {
 	@ObservedObject var viewModel: MainViewModel
+	@StateObject var storiesViewModel: StoriesViewModel
 	@Binding var path: [Route]
+
+	init(viewModel: MainViewModel, storiesViewModel: StoriesViewModel, path: Binding<[Route]>) {
+		self.viewModel = viewModel
+		self._storiesViewModel = .init(wrappedValue: storiesViewModel)
+		self._path = path
+	}
 
 	var body: some View {
 		ZStack {
-			NavigationStack(path: $path) {
-				VStack {
-					StoriesGridView(
-						stories: $viewModel.stories,
-						isStoriesShowning: $viewModel.isStoriesShowing,
-						selectedStoryId: $viewModel.selectedStoryId
-					)
-					CityPickerView(
-						from: $viewModel.selectedFromStation,
-						to: $viewModel.selectedToStation,
-						path: $path
-					)
-					if viewModel.isFindButtonShowing {
-						FindButton {
-							viewModel.fetchTripsTask()
-							path.append(.trips)
-						}
-					}
-					Spacer()
-				}
-				.navigationDestination(for: Route.self) { route in
-					switch route {
-						case .selectCity(let direction):
-							CitySelectionView(viewModel: viewModel, path: $path, direction: direction)
-								.toolbar(.hidden, for: .tabBar)
-						case .selectStation(let direction):
-							StationSelectionView(vm: viewModel, path: $path, direction: direction)
-						case .trips:
-							TripsView(viewModel: viewModel, path: $path)
-								.toolbar(.hidden, for: .tabBar)
-						case .filters:
-							OptionsView(viewModel: viewModel, path: $path)
-					}
-				}
-			}
-
-			if viewModel.isStoriesShowing {
-				let vm = StoriesViewModel(
-					stories: $viewModel.stories,
-					selectedId: viewModel.selectedStoryId ?? 0,
-					closeAction: viewModel.hideStories
+			VStack {
+				StoriesGridView(viewModel: storiesViewModel)
+				CityPickerView(
+					from: $viewModel.selectedFromStation,
+					to: $viewModel.selectedToStation,
+					path: $path
 				)
-				StoriesView(viewModel: vm)
-					.id(UUID())
+				if viewModel.isFindButtonShowing {
+					FindButton {
+						viewModel.fetchTripsTask()
+						path.append(.trips)
+					}
+				}
+				Spacer()
+			}
+			if storiesViewModel.isStoriesShowing {
+				StoriesView(viewModel: storiesViewModel)
 					.transition(.move(edge: .top))
 			}
-
 		}
-		.ignoresSafeArea()
 	}
 }

@@ -10,7 +10,6 @@ import SwiftUI
 struct StoriesView: View {
 	@StateObject var viewModel: StoriesViewModel
 	@GestureState private var dragOffset: CGFloat = 0
-	@State private var finalOffset: CGFloat = 0
 
 	var body: some View {
 		ZStack(alignment: .topTrailing) {
@@ -30,7 +29,7 @@ struct StoriesView: View {
 		.onTapGesture {
 			viewModel.nextStory()
 		}
-		.offset(y: finalOffset + dragOffset)
+		.offset(y: viewModel.finalOffset + dragOffset)
 		.gesture(
 			DragGesture(minimumDistance: 30)
 				.updating($dragOffset) { value, state, _ in
@@ -40,14 +39,14 @@ struct StoriesView: View {
 				}
 				.onEnded { value in
 					if value.translation.height < -50 {
-						finalOffset = value.translation.height
-						viewModel.close()
+						viewModel.finalOffset = value.translation.height
+						withAnimation {
+							viewModel.close()
+						}
+
 					}
 				}
 		)
-		.onAppear {
-			viewModel.start()
-		}
 		.frame(maxHeight: .infinity, alignment: .top)
 		.transition(.move(edge: .top))
 		.zIndex(1)
@@ -62,26 +61,18 @@ struct PreviewView: View {
 	var body: some View {
 
 		ZStack {
-			StoriesGridView(stories: .constant([.story1, .story2]), isStoriesShowning: $show, selectedStoryId: $selectedStoryId)
+			let vm = StoriesViewModel(stories: [.story1])
+			StoriesGridView(viewModel: vm)
 				.onTapGesture {
 					withAnimation(.spring()) {
 						show = true
 					}
 				}
 			if show {
-				StoriesView(
-					viewModel: StoriesViewModel(
-						stories: .constant([.story1, .story2, .story3, .story4]),
-						selectedId: 0,
-						closeAction: {
-							withAnimation(.spring()) {
-								show = false
-							}
-						})
-				)
-				.frame(maxHeight: .infinity, alignment: .top)
-				.transition(.move(edge: .top))
-				.zIndex(1)
+				StoriesView(viewModel: vm)
+					.frame(maxHeight: .infinity, alignment: .top)
+					.transition(.move(edge: .top))
+					.zIndex(1)
 			}
 		}
 		.ignoresSafeArea()
