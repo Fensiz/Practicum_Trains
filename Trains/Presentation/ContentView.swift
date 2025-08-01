@@ -22,7 +22,11 @@ struct ContentView: View {
 		ZStack {
 			NavigationStack(path: $path) {
 				TabView {
-					let storiesViewModel = StoriesViewModel(stories: [.story1, .story2, .story3])
+					let storiesViewModel = StoriesViewModel(storyBlocks: [
+						StoryBlock(stories: [.story1, .story2]),
+						StoryBlock(stories: [.story3, .story4]),
+						StoryBlock(stories: [.story3, .story4]),
+					])
 					MainView(
 						viewModel: dependencies.mainViewModel,
 						storiesViewModel: storiesViewModel,

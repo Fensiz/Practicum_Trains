@@ -16,10 +16,6 @@ struct SimpleCarrier {
 }
 
 @MainActor final class MainViewModel: ObservableObject {
-	@Published var stories: [Story] = [.story1, .story2, .story1, .story2]
-	@Published var isStoriesShowing: Bool = false
-	@Published var selectedStoryId: Int? = nil
-
 	@Published var stations: [SimpleStation] = []
 	@Published var cities: [SettlementShort] = []
 	@Published var citySearchText = ""

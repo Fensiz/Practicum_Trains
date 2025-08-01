@@ -16,19 +16,33 @@ struct StoriesView: View {
 			StoryView(story: viewModel.currentStory)
 			VStack(alignment: .trailing, spacing: 16) {
 				ProgressBar(
-					numberOfSections: viewModel.stories.count,
+					numberOfSections: viewModel.currentBlock.stories.count,
 					progress: viewModel.progress
 				)
 				CloseButton(closeAction: viewModel.close)
+				HStack {
+					Color.clear
+						.contentShape(Rectangle())
+						.onTapGesture {
+							viewModel.previousStory()
+						}
+					Color.clear
+						.contentShape(Rectangle())
+						.onTapGesture {
+							viewModel.nextStory()
+						}
+				}
+				.ignoresSafeArea()
 				Spacer()
 			}
 			.padding(.horizontal, 16)
 			.padding(.top, Utils.safeAreaInsets?.top ?? 44)
+
 		}
 		.ignoresSafeArea()
-		.onTapGesture {
-			viewModel.nextStory()
-		}
+//		.onTapGesture {
+//			viewModel.nextStory()
+//		}
 		.offset(y: viewModel.finalOffset + dragOffset)
 		.gesture(
 			DragGesture(minimumDistance: 30)
@@ -40,10 +54,7 @@ struct StoriesView: View {
 				.onEnded { value in
 					if value.translation.height < -50 {
 						viewModel.finalOffset = value.translation.height
-						withAnimation {
-							viewModel.close()
-						}
-
+						viewModel.close()
 					}
 				}
 		)
@@ -61,7 +72,10 @@ struct PreviewView: View {
 	var body: some View {
 
 		ZStack {
-			let vm = StoriesViewModel(stories: [.story1])
+			let vm = StoriesViewModel(storyBlocks:  [
+				StoryBlock(stories: [.story1, .story2]),
+				StoryBlock(stories: [.story3, .story4]),
+			])
 			StoriesGridView(viewModel: vm)
 				.onTapGesture {
 					withAnimation(.spring()) {

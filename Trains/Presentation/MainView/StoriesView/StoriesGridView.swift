@@ -13,30 +13,32 @@ struct StoriesGridView: View {
 	var body: some View {
 		ScrollView(.horizontal) {
 			LazyHGrid(rows: [.init(.fixed(92), spacing: 12)]) {
-				ForEach(viewModel.stories.indices, id: \.self) { i in
-					let story = viewModel.stories[i % viewModel.stories.count]
-					ZStack(alignment: .bottomLeading) {
-						story.image
-							.resizable()
-							.aspectRatio(contentMode: .fill)
-							.frame(width: 92, height: 140)
-							.overlay {
-								RoundedRectangle(cornerRadius: Constants.cornerRadius)
-									.strokeBorder(Color.ypBlue, lineWidth: story.isViewed ? 0 : 4)
-							}
-							.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
-							.onTapGesture {
-								withAnimation(.spring()) {
-									viewModel.showStory(with: i)
+				ForEach(viewModel.storyBlocks.indices, id: \.self) { i in
+					let storyBlock = viewModel.storyBlocks[i % viewModel.storyBlocks.count]
+					if let story = storyBlock.stories.first {
+						ZStack(alignment: .bottomLeading) {
+							story.image
+								.resizable()
+								.aspectRatio(contentMode: .fill)
+								.frame(width: 92, height: 140)
+								.overlay {
+									RoundedRectangle(cornerRadius: Constants.cornerRadius)
+										.strokeBorder(Color.ypBlue, lineWidth: storyBlock.isViewed ? 0 : 4)
 								}
-							}
-						Text(story.title)
-							.lineLimit(3)
-							.font(.ypSmall)
-							.padding(8)
-							.frame(maxWidth: 92)
+								.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
+								.onTapGesture {
+									withAnimation(.spring()) {
+										viewModel.showStory(with: i)
+									}
+								}
+							Text(story.title)
+								.lineLimit(3)
+								.font(.ypSmall)
+								.padding(8)
+								.frame(maxWidth: 92)
+						}
+						.opacity(story.isViewed ? 0.5 : 1)
 					}
-					.opacity(story.isViewed ? 0.5 : 1)
 				}
 			}
 			.padding(.horizontal, Constants.padding)
