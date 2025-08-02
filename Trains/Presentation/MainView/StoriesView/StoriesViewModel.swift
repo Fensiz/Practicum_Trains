@@ -9,11 +9,12 @@ import Combine
 import SwiftUI
 
 struct StoryBlock {
+	let id: String
 	let stories: [Story]
 	var isViewed: Bool = false
 }
 
-final class StoriesViewModel: ObservableObject {
+@MainActor final class StoriesViewModel: ObservableObject {
 
 	// MARK: - Inner Types
 
@@ -34,7 +35,7 @@ final class StoriesViewModel: ObservableObject {
 	// MARK: - @Published properties
 
 	@Published var progress: CGFloat = 0
-	@Published var storyBlocks: [StoryBlock]
+	@Published var storyBlocks: [StoryBlock] = []
 	@Published var isStoriesShowing: Bool = false
 	@Published var finalOffset: CGFloat = 0
 
@@ -46,6 +47,7 @@ final class StoriesViewModel: ObservableObject {
 
 	// MARK: - Private properties
 
+	private let storyService: any StoryServiceProtocol
 	private var selectedId: Int = 0
 	private var configuration: Configuration
 	private var timer: Timer.TimerPublisher? {
@@ -62,10 +64,13 @@ final class StoriesViewModel: ObservableObject {
 
 	// MARK: - Initializators
 
-	init(storyBlocks: [StoryBlock]) {
-		self._storyBlocks = .init(initialValue: storyBlocks)
+	init(storyService: any StoryServiceProtocol) {
 		self.configuration = Configuration(storiesCount: 0)
 		self.progress = 0
+		self.storyService = storyService
+		Task {
+			storyBlocks = await self.storyService.fetchStoryBlocks()
+		}
 	}
 
 	// MARK: - Public methods
@@ -140,7 +145,6 @@ final class StoriesViewModel: ObservableObject {
 
 	private func tick() {
 		markCurrentStoryBlockAsViewed()
-		print(progress)
 		let next = progress + configuration.progressPerTick
 		if next >= 1 {
 			nextBlock()
@@ -158,5 +162,8 @@ final class StoriesViewModel: ObservableObject {
 			index == stories.count - 1
 		else { return }
 		storyBlocks[selectedId].isViewed = true
+		Task {
+			await storyService.markBlockAsViewed(storyBlocks[selectedId].id)
+		}
 	}
 }

@@ -40,9 +40,6 @@ struct StoriesView: View {
 
 		}
 		.ignoresSafeArea()
-//		.onTapGesture {
-//			viewModel.nextStory()
-//		}
 		.offset(y: viewModel.finalOffset + dragOffset)
 		.gesture(
 			DragGesture(minimumDistance: 30)
@@ -65,17 +62,15 @@ struct StoriesView: View {
 	}
 }
 
-struct PreviewView: View {
+private struct PreviewView: View {
 	@State private var show = false
 	@State private var selectedStoryId: Int?
 	@State private var isShowingStoryDetails: Bool = false
 	var body: some View {
 
 		ZStack {
-			let vm = StoriesViewModel(storyBlocks:  [
-				StoryBlock(stories: [.story1, .story2]),
-				StoryBlock(stories: [.story3, .story4]),
-			])
+			let storyService = StoryService()
+			let vm = StoriesViewModel(storyService: storyService)
 			StoriesGridView(viewModel: vm)
 				.onTapGesture {
 					withAnimation(.spring()) {
@@ -95,13 +90,4 @@ struct PreviewView: View {
 
 #Preview {
 	PreviewView()
-//	StoriesView(stories: [.story1, .story2, .story1], closeAction: { print("+") })
-}
-
-//#Preview {
-//	StoriesView(stories: [.story1, .story2], closeAction: {})
-//}
-
-#Preview {
-	StoryView(story: .story1)
 }
