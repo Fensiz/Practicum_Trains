@@ -21,13 +21,12 @@ struct CarrierInfoView: View {
 				} placeholder: {
 					Color.gray.opacity(0.2)
 				}
-//				AsyncImage(url: logoUrl)
-					.frame(height: 104)
-					.frame(maxWidth: .infinity)
-					.background(.white)
-					.clipShape(
-						RoundedRectangle(cornerRadius: 24)
-					)
+				.frame(height: 104)
+				.frame(maxWidth: .infinity)
+				.background(.white)
+				.clipShape(
+					RoundedRectangle(cornerRadius: 24)
+				)
 			}
 			Group {
 				Text(carrier.name)
@@ -38,6 +37,7 @@ struct CarrierInfoView: View {
 							.font(.ypMedium)
 						Link(email, destination: URL(string: "mailto:\(email)")!)
 							.font(.ypSmall)
+							.foregroundStyle(.ypBlue)
 					}
 				}
 				if let phone = carrier.phone, !phone.isEmpty {
@@ -46,6 +46,7 @@ struct CarrierInfoView: View {
 							.font(.ypMedium)
 						Link(phone, destination: URL(string: "tel:\(phone)")!)
 							.font(.ypSmall)
+							.foregroundStyle(.ypBlue)
 					}
 				}
 			}

@@ -37,7 +37,6 @@ struct CityPickerView: View {
 					.background(
 						Circle()
 							.fill(Color.white)
-							.frame(width: 36, height: 36)
 					)
 			}
 		}

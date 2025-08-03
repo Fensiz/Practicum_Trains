@@ -44,19 +44,19 @@ struct StoriesView: View {
 		.gesture(
 			DragGesture(minimumDistance: 30)
 				.updating($dragOffset) { value, state, _ in
-					if value.translation.height < 0 {
+					if value.translation.height > 0 {
 						state = value.translation.height
 					}
 				}
 				.onEnded { value in
-					if value.translation.height < -50 {
+					if value.translation.height > 50 {
 						viewModel.finalOffset = value.translation.height
 						viewModel.close()
 					}
 				}
 		)
 		.frame(maxHeight: .infinity, alignment: .top)
-		.transition(.move(edge: .top))
+		.transition(.move(edge: .bottom))
 		.zIndex(1)
 		.toolbar(.hidden, for: .tabBar)
 	}

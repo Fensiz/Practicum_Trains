@@ -37,7 +37,7 @@ struct StoriesGridView: View {
 								.padding(8)
 								.frame(maxWidth: 92)
 						}
-						.opacity(story.isViewed ? 0.5 : 1)
+						.opacity(storyBlock.isViewed ? 0.5 : 1)
 					}
 				}
 			}
