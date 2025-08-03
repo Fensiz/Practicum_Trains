@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ScheduleItem: View {
 	let item: SimpleTrip
+	let goToCarrierInfoAction: (SimpleCarrier) -> Void
 
 	var body: some View {
 		VStack {
@@ -75,5 +76,8 @@ struct ScheduleItem: View {
 			RoundedRectangle(cornerRadius: 24)
 				.fill(Color(.ypLightGray))
 		)
+		.onTapGesture {
+			goToCarrierInfoAction(item.carrierDetails)
+		}
 	}
 }

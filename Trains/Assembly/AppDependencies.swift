@@ -12,6 +12,7 @@ final class AppDependencies: ObservableObject {
 	lazy var stationService = StationListService(client: client, apikey: apiKey)
 	lazy var searchService = SearchService(client: client, apikey: apiKey)
 	lazy var carrierService = CarrierService(client: client, apikey: apiKey)
+	lazy var copyrightService = CopyrightService(client: client, apikey: apiKey)
 	lazy var stationCacheService: any StationCacheServiceProtocol = StationCacheService()
 	@MainActor lazy var settlementLoader: any SettlementLoaderProtocol = SettlementLoader(
 		stationService: stationService,

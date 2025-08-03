@@ -10,6 +10,8 @@ enum Route: Hashable {
 	case selectStation(Direction)
 	case trips
 	case filters
+	case agreement
+	case carrierDetails(SimpleCarrier)
 
 	static func == (lhs: Route, rhs: Route) -> Bool {
 		switch (lhs, rhs) {
@@ -17,6 +19,8 @@ enum Route: Hashable {
 			case (.selectStation, .selectStation): true
 			case (.trips, .trips): true
 			case (.filters, .filters): true
+			case (.agreement, .agreement): true
+			case (.carrierDetails, .carrierDetails): true
 			default: false
 		}
 	}
@@ -32,6 +36,10 @@ enum Route: Hashable {
 				hasher.combine("trips")
 			case .filters:
 				hasher.combine("filters")
+			case .agreement:
+				hasher.combine("agreement")
+			case .carrierDetails:
+				hasher.combine("carrierDetails")
 		}
 	}
 }

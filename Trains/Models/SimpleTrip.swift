@@ -16,4 +16,5 @@ struct SimpleTrip: Identifiable {
 	var arrivalTime: String?
 	var duration: String?
 	var date: String?
+	var carrierDetails: SimpleCarrier
 }

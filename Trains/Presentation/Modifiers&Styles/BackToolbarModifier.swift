@@ -20,6 +20,7 @@ struct BackToolbarModifier: ViewModifier {
 						}) {
 							Image(systemName: "chevron.left")
 								.fontWeight(.semibold)
+								.tint(.primary)
 						}
 					}
 				}
@@ -31,6 +32,7 @@ extension View {
 	func withBackToolbar(path: Binding<[Route]>) -> some View {
 		self
 			.navigationBarBackButtonHidden(true)
+			.navigationBarTitleDisplayMode(.inline)
 			.modifier(BackToolbarModifier(path: path))
 	}
 }

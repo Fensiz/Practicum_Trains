@@ -24,8 +24,10 @@ struct TripsView: View {
 				} else {
 					List {
 						ForEach(viewModel.filteredTrips) { item in
-							ScheduleItem(item: item)
-								.listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+							ScheduleItem(item: item) { data in
+								path.append(.carrierDetails(data))
+							}
+							.listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
 						}
 						if viewModel.filteredTrips.count > 4 {
 							Color.clear
