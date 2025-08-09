@@ -6,10 +6,10 @@
 //
 
 enum Route: Hashable {
-	case selectCity(Direction)
-	case selectStation(Direction)
-	case trips
-	case filters
+	case selectCity(viewModel: MainViewModel, direction: Direction)
+	case selectStation(viewModel: MainViewModel, direction: Direction)
+	case trips(tripsStream: AsyncThrowingStream<SimpleTrip, any Error>, from: SimpleStation, to: SimpleStation)
+	case filters(TripsViewModel)
 	case agreement
 	case carrierDetails(SimpleCarrier)
 

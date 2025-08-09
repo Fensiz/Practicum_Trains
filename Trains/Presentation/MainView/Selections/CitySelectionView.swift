@@ -25,7 +25,7 @@ struct CitySelectionView: View {
 					ForEach(viewModel.cities, id: \.code) { city in
 						SelectableRow(title: city.title) {
 							viewModel.updateStations(with: city)
-							path.append(.selectStation(direction))
+							path.append(.selectStation(viewModel: viewModel, direction: direction))
 						}
 					}
 				}

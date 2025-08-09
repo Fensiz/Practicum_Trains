@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct OptionsView: View {
-	@ObservedObject private var viewModel: MainViewModel
+	@ObservedObject private var viewModel: TripsViewModel
 	@Binding private var path: [Route]
 	@State private var selectedTimeIntervals: [Bool]
 	@State private var transferFilter: Bool?
 
-	init(viewModel: MainViewModel, path: Binding<[Route]>) {
+	init(viewModel: TripsViewModel, path: Binding<[Route]>) {
 		self.viewModel = viewModel
 		self._path = path
 		if let transferFilter = viewModel.transferFilter {
@@ -31,9 +31,9 @@ struct OptionsView: View {
 			Spacer()
 			if let _ = transferFilter, selectedTimeIntervals.reduce(false, { $0 || $1 }) {
 				Button("Применить") {
-					viewModel.transferFilter = transferFilter
 					viewModel.selectedTimeIntervals = selectedTimeIntervals
-					viewModel.applyFilters()
+					viewModel.transferFilter = transferFilter
+//					viewModel.applyFilters()
 					path.removeLast()
 				}
 				.buttonStyle(PrimaryButtonStyle())

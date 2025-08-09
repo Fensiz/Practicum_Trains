@@ -11,9 +11,10 @@ struct ContentView: View {
 	@AppStorage("isDarkMode") private var isDarkThemeEnabled = false
 	@EnvironmentObject private var dependencies: AppDependencies
 	@State private var path: [Route] = []
-	@StateObject private var viewModel: MainViewModel
+	@StateObject private var viewModel: RootViewModel
+//	@StateObject private var viewModel: MainViewModel
 
-	init(viewModel: MainViewModel) {
+	init(viewModel: RootViewModel) {
 		Utils.setupTabBarAppearance()
 		_viewModel = .init(wrappedValue: viewModel)
 	}
@@ -25,7 +26,9 @@ struct ContentView: View {
 					let storySerivce = StoryService()
 					let storiesViewModel = StoriesViewModel(storyService: storySerivce)
 					MainView(
-						viewModel: dependencies.mainViewModel,
+						viewModel: dependencies.getMainViewModel { error in
+							self.viewModel.errorMessage = error
+						},
 						storiesViewModel: storiesViewModel,
 						path: $path
 					)
@@ -39,13 +42,16 @@ struct ContentView: View {
 				}
 				.navigationDestination(for: Route.self) { route in
 					switch route {
-						case .selectCity(let direction):
+						case let .selectCity(viewModel, direction):
 							CitySelectionView(viewModel: viewModel, path: $path, direction: direction)
-						case .selectStation(let direction):
+						case let .selectStation(viewModel, direction):
 							StationSelectionView(vm: viewModel, path: $path, direction: direction)
-						case .trips:
-							TripsView(viewModel: viewModel, path: $path)
-						case .filters:
+						case let .trips(stream, from, to):
+							let viewModel = TripsViewModel(stream: stream) { error in
+								self.viewModel.errorMessage = error
+							}
+							TripsView(viewModel: viewModel, path: $path, from: from, to: to)
+						case .filters(let viewModel):
 							OptionsView(viewModel: viewModel, path: $path)
 						case .agreement:
 							AgreementView(path: $path)
@@ -55,8 +61,8 @@ struct ContentView: View {
 				}
 
 			}
-			if viewModel.fetchError != nil {
-				if let error = viewModel.fetchError as? ClientError,
+			if viewModel.errorMessage != nil {
+				if let error = viewModel.errorMessage as? ClientError,
 				   let underlyingError = error.underlyingError as? URLError {
 					VStack {
 						switch underlyingError.code {
@@ -69,7 +75,7 @@ struct ContentView: View {
 						}
 					}
 					.onTapGesture {
-						viewModel.fetchError = nil
+						viewModel.errorMessage = nil
 					}
 				}
 			}
@@ -78,3 +84,8 @@ struct ContentView: View {
 		.preferredColorScheme(isDarkThemeEnabled ? .dark : .light)
 	}
 }
+
+final class RootViewModel: ObservableObject {
+	@Published var errorMessage: (any Error)? = nil
+}
+
