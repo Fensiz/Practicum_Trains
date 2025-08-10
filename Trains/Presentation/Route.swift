@@ -5,10 +5,17 @@
 //  Created by Симонов Иван Дмитриевич on 22.07.2025.
 //
 
+import Combine
+
 enum Route: Hashable {
-	case selectCity(viewModel: MainViewModel, direction: Direction)
-	case selectStation(viewModel: MainViewModel, direction: Direction)
-	case trips(tripsStream: AsyncThrowingStream<SimpleTrip, any Error>, from: SimpleStation, to: SimpleStation)
+	case selectCity(
+		publisher: AnyPublisher<[SettlementShort], Never>,
+		cities: [SettlementShort],
+		direction: Direction,
+		action: () -> Void
+	)
+	case selectStation(stations: [SimpleStation], direction: Direction)
+	case trips(from: SimpleStation, to: SimpleStation)
 	case filters(TripsViewModel)
 	case agreement
 	case carrierDetails(SimpleCarrier)

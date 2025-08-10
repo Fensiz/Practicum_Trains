@@ -87,14 +87,8 @@ struct CarrierInfoView: View {
 			)
 		]
 
-		let stream = AsyncThrowingStream<SimpleTrip, any Error> { continuation in
-			for trip in trips {
-				continuation.yield(trip)
-			}
-			continuation.finish()
-		}
 		CarrierInfoView(
-			path: .constant([.filters(TripsViewModel(stream: stream, onError: { _ in }) )]),
+			path: .constant([]),
 			carrier: SimpleCarrier(
 				name: "ОАО \"РЖД\"",
 				email: "simonov.ivan@inbox.ru",

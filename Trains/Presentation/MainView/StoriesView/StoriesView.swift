@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct StoriesView: View {
-	@StateObject var viewModel: StoriesViewModel
+	@ObservedObject var viewModel: StoriesViewModel
 	@GestureState private var dragOffset: CGFloat = 0
 
 	var body: some View {

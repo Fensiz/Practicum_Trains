@@ -9,15 +9,21 @@ import SwiftUI
 
 struct CityButton: View {
 	let title: String
-	let value: String
+	let value: SimpleStation?
 	let action: () -> Void
 
 	var body: some View {
 		Button(action: action) {
 			HStack {
-				Text(value.isEmpty ? title : value)
-					.foregroundColor(value.isEmpty ? .ypGray : .black)
-					.lineLimit(1)
+				if let value, !value.title.isEmpty {
+					Text(value.title)
+						.foregroundColor(.black)
+						.lineLimit(1)
+				} else {
+					Text(title)
+						.foregroundColor(.ypGray)
+						.lineLimit(1)
+				}
 				Spacer()
 			}
 		}

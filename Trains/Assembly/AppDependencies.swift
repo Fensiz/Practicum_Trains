@@ -21,8 +21,6 @@ final class AppDependencies: ObservableObject {
 	@MainActor func getMainViewModel(onError: @escaping (any Error) -> Void) -> MainViewModel {
 		MainViewModel(
 			loader: settlementLoader,
-			searchService: searchService,
-			carrierService: carrierService,
 			onError: onError
 		)
 	}

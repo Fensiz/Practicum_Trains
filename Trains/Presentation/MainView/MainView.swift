@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct MainView: View {
-	@StateObject var viewModel: MainViewModel
+	@StateObject var mainViewModel: MainViewModel
 	@StateObject var storiesViewModel: StoriesViewModel
 	@Binding var path: [Route]
 
 	init(viewModel: MainViewModel, storiesViewModel: StoriesViewModel, path: Binding<[Route]>) {
-		self._viewModel = .init(wrappedValue: viewModel)
+		self._mainViewModel = .init(wrappedValue: viewModel)
 		self._storiesViewModel = .init(wrappedValue: storiesViewModel)
 		self._path = path
 	}
@@ -22,25 +22,12 @@ struct MainView: View {
 		ZStack {
 			VStack {
 				StoriesGridView(viewModel: storiesViewModel)
-				CityPickerView(
-					from: $viewModel.selectedFromStation,
-					to: $viewModel.selectedToStation,
-					path: $path,
-					viewModel: viewModel
-				)
-				if
-					let from = viewModel.selectedFromStation,
-					let to = viewModel.selectedToStation,
-					viewModel.isFindButtonShowing {
-
+				CityPickerView(viewModel: mainViewModel, path: $path)
+				if mainViewModel.isFindButtonShowing,
+				   let from = mainViewModel.selectedFromStation,
+				   let to = mainViewModel.selectedToStation {
 					FindButton {
-						path.append(
-							.trips(
-								tripsStream: viewModel.fetchTripsStream(),
-								from: from,
-								to: to
-							)
-						)
+						path.append(.trips(from: from, to: to))
 					}
 				}
 				Spacer()
@@ -54,19 +41,31 @@ struct MainView: View {
 }
 
 private struct CityPickerView: View {
-	@Binding var from: SimpleStation?
-	@Binding var to: SimpleStation?
-	@Binding var path: [Route]
 	@ObservedObject var viewModel: MainViewModel
+	@Binding var path: [Route]
 
 	var body: some View {
 		HStack(spacing: 16) {
 			VStack(spacing: .zero) {
-				CityButton(title: "Откуда", value: from?.title ?? "") {
-					path.append(.selectCity(viewModel: viewModel, direction: .from))
+				CityButton(title: "Откуда", value: viewModel.selectedFromStation) {
+					path.append(
+						.selectCity(
+							publisher: viewModel.$allCities.eraseToAnyPublisher(),
+							cities: viewModel.allCities,
+							direction: .from($viewModel.selectedFromStation),
+							action: viewModel.startFetching
+						)
+					)
 				}
-				CityButton(title: "Куда", value: to?.title ?? "") {
-					path.append(.selectCity(viewModel: viewModel, direction: .to))
+				CityButton(title: "Куда", value: viewModel.selectedToStation) {
+					path.append(
+						.selectCity(
+							publisher: viewModel.$allCities.eraseToAnyPublisher(),
+							cities: viewModel.allCities,
+							direction: .to($viewModel.selectedToStation),
+							action: viewModel.startFetching
+						)
+					)
 				}
 			}
 			.padding(.horizontal, Constants.padding)
@@ -77,7 +76,7 @@ private struct CityPickerView: View {
 			)
 
 			Button {
-				swap(&to, &from)
+				viewModel.swapCities()
 			} label: {
 				Image("swap")
 					.frame(width: 36, height: 36)

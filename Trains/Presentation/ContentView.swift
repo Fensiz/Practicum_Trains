@@ -12,7 +12,6 @@ struct ContentView: View {
 	@EnvironmentObject private var dependencies: AppDependencies
 	@State private var path: [Route] = []
 	@StateObject private var viewModel: RootViewModel
-//	@StateObject private var viewModel: MainViewModel
 
 	init(viewModel: RootViewModel) {
 		Utils.setupTabBarAppearance()
@@ -27,7 +26,7 @@ struct ContentView: View {
 					let storiesViewModel = StoriesViewModel(storyService: storySerivce)
 					MainView(
 						viewModel: dependencies.getMainViewModel { error in
-							self.viewModel.errorMessage = error
+							self.viewModel.processError(error)
 						},
 						storiesViewModel: storiesViewModel,
 						path: $path
@@ -42,13 +41,20 @@ struct ContentView: View {
 				}
 				.navigationDestination(for: Route.self) { route in
 					switch route {
-						case let .selectCity(viewModel, direction):
+						case let .selectCity(publisher, cities, direction, action):
+							let viewModel = CitySelectionViewModel(publisher: publisher, cities: cities, onAppear: action)
 							CitySelectionView(viewModel: viewModel, path: $path, direction: direction)
-						case let .selectStation(viewModel, direction):
-							StationSelectionView(vm: viewModel, path: $path, direction: direction)
-						case let .trips(stream, from, to):
-							let viewModel = TripsViewModel(stream: stream) { error in
-								self.viewModel.errorMessage = error
+						case let .selectStation(stations, direction):
+							let viewModel = StationSelectionViewModel(stations: stations)
+							StationSelectionView(viewModel: viewModel, path: $path, direction: direction)
+						case let .trips(from, to):
+							let viewModel = TripsViewModel(
+								searchService: dependencies.searchService,
+								carrierService: dependencies.carrierService,
+								from: from,
+								to: to
+							) { error in
+								self.viewModel.processError(error)
 							}
 							TripsView(viewModel: viewModel, path: $path, from: from, to: to)
 						case .filters(let viewModel):
@@ -75,7 +81,7 @@ struct ContentView: View {
 						}
 					}
 					.onTapGesture {
-						viewModel.errorMessage = nil
+						viewModel.clearError()
 					}
 				}
 			}
@@ -86,6 +92,16 @@ struct ContentView: View {
 }
 
 final class RootViewModel: ObservableObject {
-	@Published var errorMessage: (any Error)? = nil
+	@Published private(set) var errorMessage: (any Error)? = nil
+
+	func processError(_ error: any Error) {
+		if errorMessage != nil {
+			errorMessage = error
+		}
+	}
+
+	func clearError() {
+		errorMessage = nil
+	}
 }
 

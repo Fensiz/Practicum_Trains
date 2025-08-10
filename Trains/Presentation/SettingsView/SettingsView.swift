@@ -37,34 +37,3 @@ struct SettingsView: View {
 		}
 	}
 }
-
-struct AgreementView: View {
-	@State private var isVisible = true
-	@Binding var path: [Route]
-	@EnvironmentObject private var dependencies: AppDependencies
-	@State var text: String = ""
-
-	var body: some View {
-		ZStack {
-			ScrollView {
-				AgreementWebView()
-					.frame(height: UIScreen.main.bounds.height)
-					.opacity(isVisible ? 1 : 0)
-			}
-			.frame(maxWidth: .infinity, maxHeight: .infinity)
-
-			if !isVisible {
-				ProgressView()
-					.progressViewStyle(CircularProgressViewStyle())
-			}
-		}
-		.navigationTitle("Пользовательское соглашение")
-		.withBackToolbar(path: $path)
-		.task {
-				try? await Task.sleep(nanoseconds: 1_000)
-				isVisible = false
-				try? await Task.sleep(nanoseconds: 3_000_000_000)
-				isVisible = true
-		}
-	}
-}
