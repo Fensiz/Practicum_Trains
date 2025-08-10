@@ -9,37 +9,62 @@ import SwiftUI
 
 struct SettingsView: View {
 	@AppStorage("isDarkMode") private var isDarkThemeEnabled = false
-	@State private var path: [String] = []
-	public var body: some View {
-		NavigationStack(path: $path) {
-			VStack(spacing: .zero) {
-				List {
-					Toggle(isOn: $isDarkThemeEnabled) {
-						Text("Темная тема")
-					}
-					.listRowSeparator(.hidden)
-					.listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
-					.frame(height: 60)
-					.tint(.ypBlue)
-					SelectableRow(title: "Пользовательское соглашение") {
-						path.append("detail")
-					}
-				}
-				.listStyle(.plain)
+	@Binding var path: [Route]
 
-				VStack(spacing: 16) {
-					Text("Приложение использует API \"Яндекс.Расписания\"")
-					Text("Версия 1.0(beta)")
+	public var body: some View {
+		VStack(spacing: .zero) {
+			List {
+				Toggle(isOn: $isDarkThemeEnabled) {
+					Text("Темная тема")
 				}
-				.font(.ypSmall)
-				.padding(.horizontal, 16)
-				.padding(.bottom, 24)
-			}
-			.navigationDestination(for: String.self) { value in
-				if value == "detail" {
-					Text("123")
+				.listRowSeparator(.hidden)
+				.listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+				.frame(height: 60)
+				.tint(.ypBlue)
+				SelectableRow(title: "Пользовательское соглашение") {
+					path.append(.agreement)
 				}
 			}
+			.listStyle(.plain)
+
+			VStack(spacing: 16) {
+				Text("Приложение использует API \"Яндекс.Расписания\"")
+				Text("Версия 1.0(beta)")
+			}
+			.font(.ypSmall)
+			.padding(.horizontal, 16)
+			.padding(.bottom, 24)
+		}
+	}
+}
+
+struct AgreementView: View {
+	@State private var isVisible = true
+	@Binding var path: [Route]
+	@EnvironmentObject private var dependencies: AppDependencies
+	@State var text: String = ""
+
+	var body: some View {
+		ZStack {
+			ScrollView {
+				AgreementWebView()
+					.frame(height: UIScreen.main.bounds.height)
+					.opacity(isVisible ? 1 : 0)
+			}
+			.frame(maxWidth: .infinity, maxHeight: .infinity)
+
+			if !isVisible {
+				ProgressView()
+					.progressViewStyle(CircularProgressViewStyle())
+			}
+		}
+		.navigationTitle("Пользовательское соглашение")
+		.withBackToolbar(path: $path)
+		.task {
+				try? await Task.sleep(nanoseconds: 1_000)
+				isVisible = false
+				try? await Task.sleep(nanoseconds: 3_000_000_000)
+				isVisible = true
 		}
 	}
 }

@@ -8,6 +8,13 @@
 import SwiftUI
 import Combine
 
+struct SimpleCarrier {
+	let name: String
+	let email: String?
+	let phone: String?
+	let imageURL: String?
+}
+
 @MainActor final class MainViewModel: ObservableObject {
 	@Published var stations: [SimpleStation] = []
 	@Published var cities: [SettlementShort] = []
@@ -25,6 +32,13 @@ import Combine
 	@Published var filteredTrips: [SimpleTrip] = []
 
 	@Published var fetchError: (any Error)? = nil
+
+	var isFindButtonShowing: Bool {
+		guard let selectedFromStation, let selectedToStation else {
+			return false
+		}
+		return selectedFromStation != selectedToStation
+	}
 
 	private var allStations: [SimpleStation] = []
 	private var allCities: [SettlementShort] = []
@@ -90,6 +104,11 @@ import Combine
 		stations = allStations
 	}
 
+	func fetchTripsTask() {
+		Task {
+			try? await fetchTrips()
+		}
+	}
 	func fetchTrips() async throws {
 		trips = []
 		guard
@@ -142,6 +161,12 @@ import Combine
 								}
 							}
 						}
+						let carrierData = SimpleCarrier(
+							name: carrierTitle,
+							email: carrierInfo?.carrier?.email,
+							phone: carrierInfo?.carrier?.phone,
+							imageURL: carrierInfo?.carrier?.logo
+						)
 
 						return SimpleTrip(
 							logoUrl: carrierInfo?.carrier?.logo,
@@ -150,7 +175,8 @@ import Combine
 							departureTime: Utils.formatTime(from: departure),
 							arrivalTime: Utils.formatTime(from: arrival),
 							duration: Utils.secondsToRoundedHoursString(detail.duration),
-							date: Utils.formatDateString(detail.start_date)
+							date: Utils.formatDateString(detail.start_date),
+							carrierDetails: carrierData
 						)
 					} else {
 						guard
@@ -165,6 +191,13 @@ import Combine
 							transfer = "С пересадкой в \(title)"
 						}
 
+						let carrierData = SimpleCarrier(
+							name: carrierTitle,
+							email: carrier.email,
+							phone: carrier.phone,
+							imageURL: carrier.logo
+						)
+
 						return SimpleTrip(
 							logoUrl: carrier.logo,
 							carrierName: carrierTitle,
@@ -172,7 +205,8 @@ import Combine
 							departureTime: Utils.formatTime(from: departure),
 							arrivalTime: Utils.formatTime(from: arrival),
 							duration: Utils.secondsToRoundedHoursString(segment.duration),
-							date: Utils.formatDateString(segment.start_date)
+							date: Utils.formatDateString(segment.start_date),
+							carrierDetails: carrierData
 						)
 					}
 				}
