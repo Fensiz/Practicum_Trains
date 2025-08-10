@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AgreementView: View {
-	@StateObject var viewModel = AgreementViewModel()
+	@StateObject var viewModel: AgreementViewModel
 	@Binding var path: [Route]
 
 	var body: some View {

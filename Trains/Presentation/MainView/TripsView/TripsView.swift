@@ -43,7 +43,12 @@ struct TripsView: View {
 			VStack {
 				Spacer()
 				Button {
-					path.append(.filters(viewModel))
+					path.append(
+						.filters(
+							selectedTimeIntervals: $viewModel.selectedTimeIntervals,
+							transferFilter: $viewModel.transferFilter
+						)
+					)
 				} label: {
 					HStack(spacing: 4) {
 						Text("Уточнить время")

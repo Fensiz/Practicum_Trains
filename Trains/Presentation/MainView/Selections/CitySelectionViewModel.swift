@@ -8,7 +8,7 @@
 import SwiftUI
 import Combine
 
-final class CitySelectionViewModel: ObservableObject {
+@MainActor final class CitySelectionViewModel: ObservableObject {
 	@Published var searchText: String = ""
 	var cities: [SettlementShort] {
 		guard !searchText.isEmpty else { return allCities }

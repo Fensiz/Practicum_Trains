@@ -25,7 +25,6 @@ import Foundation
 	private lazy var filteredTripsPublisher: AnyPublisher<[SimpleTrip], Never> = Publishers
 		.CombineLatest3($trips, $transferFilter, $selectedTimeIntervals)
 		.map { trips, transferFilter, selectedIntervals in
-
 			let timeIntervals: [(start: Int, end: Int)] = [
 				(6, 12), (12, 18), (18, 24), (0, 6)
 			]
@@ -34,7 +33,7 @@ import Foundation
 				.filter { $0.element }
 				.map { timeIntervals[$0.offset] }
 
-			return self.trips.filter { trip in
+			return trips.filter { trip in
 				if let filter = transferFilter, filter == false, trip.additionalInfo != nil {
 					return false
 				}
@@ -76,6 +75,7 @@ import Foundation
 	}
 
 	func fetchTrips() async {
+		guard trips.isEmpty else { return }
 		do {
 			let response = try await searchService.getScheduleBetweenStations(
 				from: fromStation.code,
@@ -95,7 +95,7 @@ import Foundation
 
 				for try await trip in group 	{
 					guard let trip else { continue }
-					trips.append(trip)
+					self.trips.append(trip)
 				}
 			}
 		} catch {

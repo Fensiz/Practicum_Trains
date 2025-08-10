@@ -61,32 +61,9 @@ struct CarrierInfoView: View {
 }
 
 #Preview {
-	let rzd = "https://yastat.net/s3/rasp/media/data/company/logo/logo.gif"
+//	let rzd = "https://yastat.net/s3/rasp/media/data/company/logo/logo.gif"
 	let ta = "https://yastat.net/s3/rasp/media/data/company/logo/thy_kopya.jpg"
 	NavigationStack {
-		let trips = [
-			SimpleTrip(
-				logoUrl: rzd,
-				carrierName: "РЖД",
-				additionalInfo: nil,
-				departureTime: "08:00",
-				arrivalTime: "12:00",
-				duration: "4ч",
-				date: "2025-08-09",
-				carrierDetails: SimpleCarrier(name: "РЖД", email: "info@rzd.ru", phone: "+7 123 456", imageURL: rzd)
-			),
-			SimpleTrip(
-				logoUrl: ta,
-				carrierName: "TA",
-				additionalInfo: "С пересадкой",
-				departureTime: "09:00",
-				arrivalTime: "14:00",
-				duration: "5ч",
-				date: "2025-08-09",
-				carrierDetails: SimpleCarrier(name: "TA", email: "info@ta.ru", phone: "+7 987 654", imageURL: ta)
-			)
-		]
-
 		CarrierInfoView(
 			path: .constant([]),
 			carrier: SimpleCarrier(

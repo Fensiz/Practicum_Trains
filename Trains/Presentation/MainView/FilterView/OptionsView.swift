@@ -8,43 +8,22 @@
 import SwiftUI
 
 struct OptionsView: View {
-	@ObservedObject private var viewModel: TripsViewModel
-	@Binding private var path: [Route]
-	@State private var selectedTimeIntervals: [Bool]
-	@State private var transferFilter: Bool?
-
-	init(viewModel: TripsViewModel, path: Binding<[Route]>) {
-		self.viewModel = viewModel
-		self._path = path
-		if let transferFilter = viewModel.transferFilter {
-			_transferFilter = .init(initialValue: transferFilter)
-		} else {
-			_transferFilter = .init(initialValue: nil)
-		}
-		selectedTimeIntervals = viewModel.selectedTimeIntervals
-	}
+	@StateObject var viewModel: OptionsViewModel
 
 	var body: some View {
 		VStack(spacing: .zero) {
-			TimeOptionView(selections: $selectedTimeIntervals)
-			TransferView(isTransferEnabled: $transferFilter)
+			TimeOptionView(selections: $viewModel.selectedTimeIntervals)
+			TransferView(isTransferEnabled: $viewModel.transferFilter)
 			Spacer()
-			if let _ = transferFilter, selectedTimeIntervals.reduce(false, { $0 || $1 }) {
+			if viewModel.isButtonVisible {
 				Button("Применить") {
-					viewModel.selectedTimeIntervals = selectedTimeIntervals
-					viewModel.transferFilter = transferFilter
-//					viewModel.applyFilters()
-					path.removeLast()
+					viewModel.applyFilters()
 				}
 				.buttonStyle(PrimaryButtonStyle())
 				.padding(.bottom, Constants.paddingMedium)
 				.padding(.horizontal, Constants.padding)
 			}
 		}
-		.withBackToolbar(path: $path)
+		.withBackToolbar(backAction: viewModel.backAction)
 	}
-}
-
-#Preview {
-	TransferView(isTransferEnabled: .constant(false))
 }

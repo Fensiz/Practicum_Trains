@@ -8,13 +8,13 @@
 import SwiftUI
 
 struct SettingsView: View {
-	@AppStorage("isDarkMode") private var isDarkThemeEnabled = false
+	@StateObject var viewModel: SettingsViewModel
 	@Binding var path: [Route]
 
 	public var body: some View {
 		VStack(spacing: .zero) {
 			List {
-				Toggle(isOn: $isDarkThemeEnabled) {
+				Toggle(isOn: $viewModel.isDarkThemeEnabled) {
 					Text("Темная тема")
 				}
 				.listRowSeparator(.hidden)

@@ -34,7 +34,8 @@ struct ContentView: View {
 					.tabItem {
 						Image("Schedule")
 					}
-					SettingsView(path: $path)
+					let settingsViewModel = SettingsViewModel()
+					SettingsView(viewModel: settingsViewModel, path: $path)
 						.tabItem {
 							Image("Settings")
 						}
@@ -57,10 +58,16 @@ struct ContentView: View {
 								self.viewModel.processError(error)
 							}
 							TripsView(viewModel: viewModel, path: $path, from: from, to: to)
-						case .filters(let viewModel):
-							OptionsView(viewModel: viewModel, path: $path)
+						case let .filters(intervals, filter):
+							let optionsViewModel = OptionsViewModel(
+								selectedTimeIntervals: intervals,
+								transferFilter: filter) {
+									self.path.removeLast()
+								}
+							OptionsView(viewModel: optionsViewModel)
 						case .agreement:
-							AgreementView(path: $path)
+							let viewModel = AgreementViewModel()
+							AgreementView(viewModel: viewModel, path: $path)
 						case .carrierDetails(let data):
 							CarrierInfoView(path: $path, carrier: data)
 					}

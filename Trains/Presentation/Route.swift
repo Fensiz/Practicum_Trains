@@ -5,6 +5,7 @@
 //  Created by Симонов Иван Дмитриевич on 22.07.2025.
 //
 
+import SwiftUI
 import Combine
 
 enum Route: Hashable {
@@ -16,7 +17,7 @@ enum Route: Hashable {
 	)
 	case selectStation(stations: [SimpleStation], direction: Direction)
 	case trips(from: SimpleStation, to: SimpleStation)
-	case filters(TripsViewModel)
+	case filters(selectedTimeIntervals: Binding<[Bool]>, transferFilter: Binding<Bool?>)
 	case agreement
 	case carrierDetails(SimpleCarrier)
 

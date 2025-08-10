@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-final class StationSelectionViewModel: ObservableObject {
+@MainActor final class StationSelectionViewModel: ObservableObject {
 	@Published var searchText: String = ""
 	var stations: [SimpleStation] {
 		guard !searchText.isEmpty else { return allStations }
