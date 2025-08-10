@@ -11,18 +11,14 @@ import Combine
 @MainActor final class MainViewModel: ObservableObject {
 	@Published var selectedFromStation: SimpleStation? = nil
 	@Published var selectedToStation: SimpleStation? = nil
-
-	private let onError: (any Error) -> Void
-
+	@Published var allCities: [SettlementShort] = []
 	var isFindButtonShowing: Bool {
 		guard let selectedFromStation, let selectedToStation else {
 			return false
 		}
 		return selectedFromStation != selectedToStation
 	}
-
-	@Published var allCities: [SettlementShort] = []
-
+	private let onError: (any Error) -> Void
 	private var loader: any SettlementLoaderProtocol
 	private var cancellables = Set<AnyCancellable>()
 
