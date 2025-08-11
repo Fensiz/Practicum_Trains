@@ -35,3 +35,7 @@ struct TransferView: View {
 		.padding(.horizontal, Constants.padding)
 	}
 }
+
+#Preview {
+	TransferView(isTransferEnabled: .constant(false))
+}

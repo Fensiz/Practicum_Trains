@@ -28,11 +28,38 @@ struct BackToolbarModifier: ViewModifier {
 	}
 }
 
+struct BackToolbarModifierForClosure: ViewModifier {
+	let backAction: (() -> Void)?
+
+	func body(content: Content) -> some View {
+		content
+			.toolbar {
+				ToolbarItem(placement: .navigationBarLeading) {
+					if let backAction {
+						Button(action: {
+							backAction()
+						}) {
+							Image(systemName: "chevron.left")
+								.fontWeight(.semibold)
+								.tint(.primary)
+						}
+					}
+				}
+			}
+	}
+}
+
 extension View {
 	func withBackToolbar(path: Binding<[Route]>) -> some View {
 		self
 			.navigationBarBackButtonHidden(true)
 			.navigationBarTitleDisplayMode(.inline)
 			.modifier(BackToolbarModifier(path: path))
+	}
+	func withBackToolbar(backAction: (() -> Void)?) -> some View {
+		self
+			.navigationBarBackButtonHidden(true)
+			.navigationBarTitleDisplayMode(.inline)
+			.modifier(BackToolbarModifierForClosure(backAction: backAction))
 	}
 }

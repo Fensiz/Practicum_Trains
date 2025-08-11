@@ -7,19 +7,65 @@
 
 import SwiftUI
 
-struct CityPickerView: View {
-	@Binding var from: SimpleStation?
-	@Binding var to: SimpleStation?
+struct MainView: View {
+	@StateObject var mainViewModel: MainViewModel
+	@StateObject var storiesViewModel: StoriesViewModel
+	@Binding var path: [Route]
+
+	init(viewModel: MainViewModel, storiesViewModel: StoriesViewModel, path: Binding<[Route]>) {
+		self._mainViewModel = .init(wrappedValue: viewModel)
+		self._storiesViewModel = .init(wrappedValue: storiesViewModel)
+		self._path = path
+	}
+
+	var body: some View {
+		ZStack {
+			VStack {
+				StoriesGridView(viewModel: storiesViewModel)
+				CityPickerView(viewModel: mainViewModel, path: $path)
+				if mainViewModel.isFindButtonShowing,
+				   let from = mainViewModel.selectedFromStation,
+				   let to = mainViewModel.selectedToStation {
+					FindButton {
+						path.append(.trips(from: from, to: to))
+					}
+				}
+				Spacer()
+			}
+			if storiesViewModel.isStoriesShowing {
+				StoriesView(viewModel: storiesViewModel)
+					.transition(.move(edge: .top))
+			}
+		}
+	}
+}
+
+private struct CityPickerView: View {
+	@ObservedObject var viewModel: MainViewModel
 	@Binding var path: [Route]
 
 	var body: some View {
 		HStack(spacing: 16) {
 			VStack(spacing: .zero) {
-				CityButton(title: "Откуда", value: from?.title ?? "") {
-					path.append(.selectCity(.from))
+				CityButton(title: "Откуда", value: viewModel.selectedFromStation) {
+					path.append(
+						.selectCity(
+							publisher: viewModel.$allCities.eraseToAnyPublisher(),
+							cities: viewModel.allCities,
+							direction: .from($viewModel.selectedFromStation),
+							action: viewModel.startFetching
+						)
+					)
 				}
-				CityButton(title: "Куда", value: to?.title ?? "") {
-					path.append(.selectCity(.to))
+				CityButton(title: "Куда", value: viewModel.selectedToStation) {
+					path.append(
+						.selectCity(
+							publisher: viewModel.$allCities.eraseToAnyPublisher(),
+							cities: viewModel.allCities,
+							direction: .to($viewModel.selectedToStation),
+							action: viewModel.startFetching
+						)
+					)
 				}
 			}
 			.padding(.horizontal, Constants.padding)
@@ -30,7 +76,7 @@ struct CityPickerView: View {
 			)
 
 			Button {
-				swap(&to, &from)
+				viewModel.swapCities()
 			} label: {
 				Image("swap")
 					.frame(width: 36, height: 36)
@@ -49,56 +95,5 @@ struct CityPickerView: View {
 		.padding(.horizontal, Constants.padding)
 		.padding(.top, 20)
 		.padding(.bottom, Constants.padding)
-	}
-}
-struct FindButton: View {
-	let action: () -> Void
-
-	var body: some View {
-		Button {
-			action()
-		} label: {
-			Text("Найти")
-				.font(.ypSmallBold)
-				.foregroundStyle(.white)
-				.frame(width: 150, height: Constants.buttonHeight)
-				.background(Color.ypBlue)
-				.clipShape(RoundedRectangle(cornerRadius: Constants.cornerRadius))
-		}
-	}
-}
-struct MainView: View {
-	@ObservedObject var viewModel: MainViewModel
-	@StateObject var storiesViewModel: StoriesViewModel
-	@Binding var path: [Route]
-
-	init(viewModel: MainViewModel, storiesViewModel: StoriesViewModel, path: Binding<[Route]>) {
-		self.viewModel = viewModel
-		self._storiesViewModel = .init(wrappedValue: storiesViewModel)
-		self._path = path
-	}
-
-	var body: some View {
-		ZStack {
-			VStack {
-				StoriesGridView(viewModel: storiesViewModel)
-				CityPickerView(
-					from: $viewModel.selectedFromStation,
-					to: $viewModel.selectedToStation,
-					path: $path
-				)
-				if viewModel.isFindButtonShowing {
-					FindButton {
-						viewModel.fetchTripsTask()
-						path.append(.trips)
-					}
-				}
-				Spacer()
-			}
-			if storiesViewModel.isStoriesShowing {
-				StoriesView(viewModel: storiesViewModel)
-					.transition(.move(edge: .top))
-			}
-		}
 	}
 }

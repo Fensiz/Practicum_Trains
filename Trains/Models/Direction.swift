@@ -5,6 +5,9 @@
 //  Created by Симонов Иван Дмитриевич on 21.07.2025.
 //
 
-enum Direction {
-	case from, to
+import SwiftUI
+
+enum Direction: Sendable {
+	case from(Binding<SimpleStation?>)
+	case to(Binding<SimpleStation?>)
 }

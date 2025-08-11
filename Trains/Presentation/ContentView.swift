@@ -11,9 +11,9 @@ struct ContentView: View {
 	@AppStorage("isDarkMode") private var isDarkThemeEnabled = false
 	@EnvironmentObject private var dependencies: AppDependencies
 	@State private var path: [Route] = []
-	@StateObject private var viewModel: MainViewModel
+	@StateObject private var viewModel: RootViewModel
 
-	init(viewModel: MainViewModel) {
+	init(viewModel: RootViewModel) {
 		Utils.setupTabBarAppearance()
 		_viewModel = .init(wrappedValue: viewModel)
 	}
@@ -25,51 +25,70 @@ struct ContentView: View {
 					let storySerivce = StoryService()
 					let storiesViewModel = StoriesViewModel(storyService: storySerivce)
 					MainView(
-						viewModel: dependencies.mainViewModel,
+						viewModel: dependencies.getMainViewModel { error in
+							self.viewModel.processError(error)
+						},
 						storiesViewModel: storiesViewModel,
 						path: $path
 					)
 					.tabItem {
 						Image("Schedule")
 					}
-					SettingsView(path: $path)
+					let settingsViewModel = SettingsViewModel()
+					SettingsView(viewModel: settingsViewModel, path: $path)
 						.tabItem {
 							Image("Settings")
 						}
 				}
 				.navigationDestination(for: Route.self) { route in
 					switch route {
-						case .selectCity(let direction):
+						case let .selectCity(publisher, cities, direction, action):
+							let viewModel = CitySelectionViewModel(publisher: publisher, cities: cities, onAppear: action)
 							CitySelectionView(viewModel: viewModel, path: $path, direction: direction)
-						case .selectStation(let direction):
-							StationSelectionView(vm: viewModel, path: $path, direction: direction)
-						case .trips:
-							TripsView(viewModel: viewModel, path: $path)
-						case .filters:
-							OptionsView(viewModel: viewModel, path: $path)
+						case let .selectStation(stations, direction):
+							let viewModel = StationSelectionViewModel(stations: stations)
+							StationSelectionView(viewModel: viewModel, path: $path, direction: direction)
+						case let .trips(from, to):
+							let viewModel = TripsViewModel(
+								searchService: dependencies.searchService,
+								carrierService: dependencies.carrierService,
+								from: from,
+								to: to
+							) { error in
+								self.viewModel.processError(error)
+							}
+							TripsView(viewModel: viewModel, path: $path, from: from, to: to)
+						case let .filters(intervals, filter):
+							let optionsViewModel = OptionsViewModel(
+								selectedTimeIntervals: intervals,
+								transferFilter: filter) {
+									self.path.removeLast()
+								}
+							OptionsView(viewModel: optionsViewModel)
 						case .agreement:
-							AgreementView(path: $path)
+							let viewModel = AgreementViewModel()
+							AgreementView(viewModel: viewModel, path: $path)
 						case .carrierDetails(let data):
 							CarrierInfoView(path: $path, carrier: data)
 					}
 				}
 
 			}
-			if viewModel.fetchError != nil {
-				if let error = viewModel.fetchError as? ClientError,
+			if viewModel.errorMessage != nil {
+				if let error = viewModel.errorMessage as? ClientError,
 				   let underlyingError = error.underlyingError as? URLError {
 					VStack {
 						switch underlyingError.code {
 							case .notConnectedToInternet:
-								NoInternetErrorView()
+								ErrorView(type: .noInternet)
 							case .badServerResponse, .timedOut:
-								ServerErrorView()
+								ErrorView(type: .server)
 							default:
-								UnknownErrorView()
+								ErrorView(type: .unknown)
 						}
 					}
 					.onTapGesture {
-						viewModel.fetchError = nil
+						viewModel.clearError()
 					}
 				}
 			}
@@ -78,3 +97,18 @@ struct ContentView: View {
 		.preferredColorScheme(isDarkThemeEnabled ? .dark : .light)
 	}
 }
+
+final class RootViewModel: ObservableObject {
+	@Published private(set) var errorMessage: (any Error)? = nil
+
+	func processError(_ error: any Error) {
+		if errorMessage != nil {
+			errorMessage = error
+		}
+	}
+
+	func clearError() {
+		errorMessage = nil
+	}
+}
+

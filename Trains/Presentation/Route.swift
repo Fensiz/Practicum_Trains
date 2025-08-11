@@ -5,11 +5,19 @@
 //  Created by Симонов Иван Дмитриевич on 22.07.2025.
 //
 
+import SwiftUI
+import Combine
+
 enum Route: Hashable {
-	case selectCity(Direction)
-	case selectStation(Direction)
-	case trips
-	case filters
+	case selectCity(
+		publisher: AnyPublisher<[SettlementShort], Never>,
+		cities: [SettlementShort],
+		direction: Direction,
+		action: () -> Void
+	)
+	case selectStation(stations: [SimpleStation], direction: Direction)
+	case trips(from: SimpleStation, to: SimpleStation)
+	case filters(selectedTimeIntervals: Binding<[Bool]>, transferFilter: Binding<Bool?>)
 	case agreement
 	case carrierDetails(SimpleCarrier)
 

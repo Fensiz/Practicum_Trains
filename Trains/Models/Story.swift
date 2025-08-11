@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct Story {
+struct Story: Sendable {
 	let title: String
 	let text: String
 	let image: Image

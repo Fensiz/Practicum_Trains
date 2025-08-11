@@ -8,13 +8,15 @@
 import SwiftUI
 
 struct TripsView: View {
-	@ObservedObject var viewModel: MainViewModel
+	@StateObject var viewModel: TripsViewModel
 	@Binding var path: [Route]
+	let from: SimpleStation
+	let to: SimpleStation
 
 	var body: some View {
 		ZStack {
 			VStack {
-				Text("\(viewModel.selectedFromStation?.title ?? "") → \(viewModel.selectedToStation?.title ?? "")")
+				Text("\(from.title) → \(to.title)")
 					.font(.ypMediumBold)
 					.padding(16)
 				if viewModel.filteredTrips.isEmpty {
@@ -41,7 +43,12 @@ struct TripsView: View {
 			VStack {
 				Spacer()
 				Button {
-					path.append(.filters)
+					path.append(
+						.filters(
+							selectedTimeIntervals: $viewModel.selectedTimeIntervals,
+							transferFilter: $viewModel.transferFilter
+						)
+					)
 				} label: {
 					HStack(spacing: 4) {
 						Text("Уточнить время")
@@ -58,5 +65,8 @@ struct TripsView: View {
 			}
 		}
 		.withBackToolbar(path: $path)
+		.task {
+			await self.viewModel.fetchTrips()
+		}
 	}
 }

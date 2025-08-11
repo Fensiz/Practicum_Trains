@@ -18,11 +18,20 @@ final class AppDependencies: ObservableObject {
 		stationService: stationService,
 		cacheService: stationCacheService
 	)
-	@MainActor lazy var mainViewModel = MainViewModel(
-		loader: settlementLoader,
-		searchService: searchService,
-		carrierService: carrierService
-	)
+	@MainActor func getMainViewModel(onError: @escaping (any Error) -> Void) -> MainViewModel {
+		MainViewModel(
+			loader: settlementLoader,
+			onError: onError
+		)
+	}
+	@MainActor func getRootViewModel() -> RootViewModel {
+		RootViewModel()
+	}
+//	@MainActor lazy var mainViewModel = MainViewModel(
+//		loader: settlementLoader,
+//		searchService: searchService,
+//		carrierService: carrierService
+//	)
 
 	private let client: Client
 	private let apiKey: String

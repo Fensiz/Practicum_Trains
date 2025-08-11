@@ -8,17 +8,11 @@
 import Combine
 import SwiftUI
 
-struct StoryBlock {
-	let id: String
-	let stories: [Story]
-	var isViewed: Bool = false
-}
-
 @MainActor final class StoriesViewModel: ObservableObject {
 
 	// MARK: - Inner Types
 
-	private struct Configuration {
+	private struct Configuration: Sendable {
 		let timerTickInternal: TimeInterval
 		let progressPerTick: CGFloat
 
