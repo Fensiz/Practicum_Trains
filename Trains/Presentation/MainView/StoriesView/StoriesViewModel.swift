@@ -12,7 +12,7 @@ import SwiftUI
 
 	// MARK: - Inner Types
 
-	private struct Configuration {
+	private struct Configuration: Sendable {
 		let timerTickInternal: TimeInterval
 		let progressPerTick: CGFloat
 

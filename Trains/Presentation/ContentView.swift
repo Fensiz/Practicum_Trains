@@ -80,11 +80,11 @@ struct ContentView: View {
 					VStack {
 						switch underlyingError.code {
 							case .notConnectedToInternet:
-								NoInternetErrorView()
+								ErrorView(type: .noInternet)
 							case .badServerResponse, .timedOut:
-								ServerErrorView()
+								ErrorView(type: .server)
 							default:
-								UnknownErrorView()
+								ErrorView(type: .unknown)
 						}
 					}
 					.onTapGesture {

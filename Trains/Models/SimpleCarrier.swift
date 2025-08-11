@@ -5,7 +5,7 @@
 //  Created by Симонов Иван Дмитриевич on 10.08.2025.
 //
 
-struct SimpleCarrier {
+struct SimpleCarrier: Sendable {
 	let name: String
 	let email: String?
 	let phone: String?

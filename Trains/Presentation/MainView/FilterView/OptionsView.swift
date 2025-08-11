@@ -27,3 +27,27 @@ struct OptionsView: View {
 		.withBackToolbar(backAction: viewModel.backAction)
 	}
 }
+
+// MARK: - OptionsView Previews
+
+#Preview("Пустые фильтры (кнопки нет)") {
+	OptionsView(
+		viewModel: OptionsViewModel(
+			selectedTimeIntervals: .constant([false, false, false, false]),
+			transferFilter: .constant(nil),
+			backAction: nil
+		)
+	)
+	.preferredColorScheme(.light)
+}
+
+#Preview("Есть выбор (кнопка видна)") {
+	OptionsView(
+		viewModel: OptionsViewModel(
+			selectedTimeIntervals: .constant([true, false, false, false]),
+			transferFilter: .constant(true),
+			backAction: nil
+		)
+	)
+	.preferredColorScheme(.dark)
+}

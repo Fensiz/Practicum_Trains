@@ -60,8 +60,7 @@ struct CarrierInfoView: View {
 	}
 }
 
-#Preview {
-//	let rzd = "https://yastat.net/s3/rasp/media/data/company/logo/logo.gif"
+#Preview("Turkish") {
 	let ta = "https://yastat.net/s3/rasp/media/data/company/logo/thy_kopya.jpg"
 	NavigationStack {
 		CarrierInfoView(
@@ -77,3 +76,18 @@ struct CarrierInfoView: View {
 	.preferredColorScheme(.dark)
 }
 
+#Preview("РЖД") {
+	let rzd = "https://yastat.net/s3/rasp/media/data/company/logo/logo.gif"
+	NavigationStack {
+		CarrierInfoView(
+			path: .constant([]),
+			carrier: SimpleCarrier(
+				name: "ОАО \"РЖД\"",
+				email: "simonov.ivan@inbox.ru",
+				phone: "+79150739344",
+				imageURL: rzd
+			)
+		)
+	}
+	.preferredColorScheme(.dark)
+}

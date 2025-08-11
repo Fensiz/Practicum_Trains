@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-enum Direction {
+enum Direction: Sendable {
 	case from(Binding<SimpleStation?>)
 	case to(Binding<SimpleStation?>)
 }

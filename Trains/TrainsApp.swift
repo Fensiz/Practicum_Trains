@@ -18,7 +18,7 @@ struct TrainsApp: App {
 					.tint(.ypBlue)
 					.environmentObject(dependencies)
 			} else if let error = appState.error {
-				ErrorView(error: error) {
+				SimpleErrorView(error: error) {
 					appState.retry()
 				}
 			} else {
@@ -50,22 +50,5 @@ struct TrainsApp: App {
 		Task {
 			await loadDependencies()
 		}
-	}
-}
-
-struct ErrorView: View {
-	let error: any Error
-	let onRetry: () -> Void
-
-	var body: some View {
-		VStack {
-			Text("Произошла ошибка:")
-			Text(error.localizedDescription)
-				.font(.caption)
-				.multilineTextAlignment(.center)
-				.padding()
-			Button("Повторить", action: onRetry)
-		}
-		.padding()
 	}
 }

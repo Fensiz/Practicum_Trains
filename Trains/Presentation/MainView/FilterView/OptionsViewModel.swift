@@ -7,27 +7,45 @@
 
 import SwiftUI
 
+// MARK: - OptionsViewModel
+
 @MainActor final class OptionsViewModel: ObservableObject {
+
+	// MARK: - Published Properties
+
 	@Published var selectedTimeIntervals: [Bool]
 	@Published var transferFilter: Bool?
-	let backAction: (() -> Void)?
-	var isButtonVisible: Bool {
-		transferFilter != nil && selectedTimeIntervals.reduce(false, { $0 || $1 })
-	}
+
+	// MARK: - External Bindings
+
 	@Binding private var selectedTimeIntervalsExternal: [Bool]
 	@Binding private var transferFilterExternal: Bool?
+
+	// MARK: - Actions
+
+	let backAction: (() -> Void)?
+
+	// MARK: - Computed Properties
+
+	var isButtonVisible: Bool {
+		transferFilter != nil && selectedTimeIntervals.contains(true)
+	}
+
+	// MARK: - Initialization
 
 	init(
 		selectedTimeIntervals: Binding<[Bool]>,
 		transferFilter: Binding<Bool?>,
 		backAction: (() -> Void)? = nil
 	) {
-		self._selectedTimeIntervals = .init(initialValue: selectedTimeIntervals.wrappedValue)
-		self._transferFilter = .init(initialValue: transferFilter.wrappedValue)
-		self._selectedTimeIntervalsExternal = selectedTimeIntervals
-		self._transferFilterExternal = transferFilter
+		_selectedTimeIntervals = .init(initialValue: selectedTimeIntervals.wrappedValue)
+		_transferFilter = .init(initialValue: transferFilter.wrappedValue)
+		_selectedTimeIntervalsExternal = selectedTimeIntervals
+		_transferFilterExternal = transferFilter
 		self.backAction = backAction
 	}
+
+	// MARK: - Methods
 
 	func applyFilters() {
 		selectedTimeIntervalsExternal = selectedTimeIntervals

@@ -40,3 +40,52 @@ struct CitySelectionView: View {
 		}
 	}
 }
+
+// MARK: - Previews
+
+import Combine
+
+#Preview("Список городов") {
+	let subject = PassthroughSubject<[SettlementShort], Never>()
+	let vm = CitySelectionViewModel(
+		publisher: subject.eraseToAnyPublisher(),
+		cities: mockCities(),
+		onAppear: { subject.send(mockCities()) }
+	)
+
+	NavigationStack {
+		CitySelectionView(
+			viewModel: vm,
+			path: .constant([]),
+			direction: .from(.constant(SimpleStation(title: "", code: "")))
+		)
+	}
+}
+
+
+// MARK: - Mock data helpers
+
+private func mockCities() -> [SettlementShort] {
+	[
+		mockCity(code: "MSK", title: "Москва", stationTitles: ["Курский вокзал", "Ленинградский вокзал"]),
+		mockCity(code: "SPB", title: "Санкт-Петербург", stationTitles: ["Московский вокзал", "Ладожский вокзал"]),
+		mockCity(code: "EKB", title: "Екатеринбург", stationTitles: ["Екатеринбург-Пасс.", "Шарташ"])
+	]
+}
+
+private func mockCity(code: String, title: String, stationTitles: [String]) -> SettlementShort {
+	let stations = stationTitles.enumerated().map { idx, t in
+		mockStation(code: "\(code)-\(idx+1)", title: t)
+	}
+	return SettlementShort(
+		code: code,
+		title: title,
+		stations: stations
+	)
+}
+
+private func mockStation(code: String, title: String) -> Station {
+	Station(
+		title: title, transport_type: "train", codes: .init(yandex_code: code)
+	)
+}

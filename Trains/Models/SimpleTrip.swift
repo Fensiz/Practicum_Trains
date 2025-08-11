@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SimpleTrip: Identifiable {
+struct SimpleTrip: Identifiable, Sendable {
 	let id: UUID = .init()
 	var logoUrl: String?
 	var carrierName: String
